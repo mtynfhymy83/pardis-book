@@ -1,0 +1,40 @@
+<?php
+declare(strict_types=1);
+use App\Http\Routers\Router;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CatalogController;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\SystemController;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\AccountController;
+
+return static function (Router $r): void {
+    $r->get('v1', '/health/live', SystemController::class, 'live');
+    $r->get('v1', '/health/ready', SystemController::class, 'ready');
+    $r->get('v1', '/bootstrap', SystemController::class, 'bootstrap');
+    $r->get('v1', '/home', SystemController::class, 'home');
+    $r->post('v1', '/auth/otp/request', AuthController::class, 'requestOtp');
+    $r->post('v1', '/auth/otp/verify', AuthController::class, 'verifyOtp');
+    $r->post('v1', '/auth/token/refresh', AuthController::class, 'refresh');
+    $r->get('v1', '/products', CatalogController::class, 'products');
+    $r->get('v1', '/products/{productSlug}', CatalogController::class, 'product');
+    $r->get('v1', '/series', CatalogController::class, 'series');
+    $r->get('v1', '/publishers', CatalogController::class, 'publishers');
+    $r->get('v1', '/categories', CatalogController::class, 'categories');
+    $r->get('v1', '/skus/{skuId}/pricing', CatalogController::class, 'pricing');
+    $r->post('v1', '/pricing/quote-line', CatalogController::class, 'quote');
+    $r->post('v1', '/carts', CartController::class, 'create');
+    $r->get('v1', '/cart', CartController::class, 'show');
+    $r->post('v1', '/cart/items', CartController::class, 'add');
+    $r->post('v1', '/cart/validate', CartController::class, 'validate');
+    $r->post('v1', '/checkout/quote', CheckoutController::class, 'quote', 'auth');
+    $r->post('v1', '/orders', CheckoutController::class, 'order', 'auth');
+    $r->post('v1', '/payments/attempts', CheckoutController::class, 'payment', 'auth');
+    $r->post('v1', '/payments/attempts/{attemptId}/verify', CheckoutController::class, 'verify', 'auth');
+    $r->get('v1', '/me', AccountController::class, 'me', 'auth');
+    $r->patch('v1', '/me', AccountController::class, 'update', 'auth');
+    $r->get('v1', '/me/addresses', AccountController::class, 'addresses', 'auth');
+    $r->post('v1', '/me/addresses', AccountController::class, 'addAddress', 'auth');
+    $r->get('v1', '/orders', AccountController::class, 'orders', 'auth');
+    $r->get('v1', '/orders/{orderId}', AccountController::class, 'order', 'auth');
+};

@@ -1,0 +1,35 @@
+openapi: 3.1.0
+info: {title: Pardis Book API, version: 0.1.0}
+servers: [{url: /api/v1}]
+security: [{bearerAuth: []}]
+paths:
+  /health/live: {get: {security: [], responses: {'200': {$ref: '#/components/responses/Success'}}}}
+  /health/ready: {get: {security: [], responses: {'200': {$ref: '#/components/responses/Success'}, '503': {$ref: '#/components/responses/Error'}}}}
+  /bootstrap: {get: {security: [], responses: {'200': {$ref: '#/components/responses/Success'}}}}
+  /home: {get: {security: [], responses: {'200': {$ref: '#/components/responses/Success'}}}}
+  /auth/otp/request: {post: {security: [], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}, '429': {$ref: '#/components/responses/Error'}}}}
+  /auth/otp/verify: {post: {security: [], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}, '422': {$ref: '#/components/responses/Error'}}}}
+  /auth/token/refresh: {post: {security: [], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}}}}
+  /products: {get: {security: [], parameters: [{$ref: '#/components/parameters/Page'}, {$ref: '#/components/parameters/PageSize'}], responses: {'200': {$ref: '#/components/responses/Success'}}}}
+  /products/{productSlug}: {get: {security: [], parameters: [{name: productSlug, in: path, required: true, schema: {type: string}}], responses: {'200': {$ref: '#/components/responses/Success'}, '404': {$ref: '#/components/responses/Error'}}}}
+  /pricing/quote-line: {post: {security: [], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}, '409': {$ref: '#/components/responses/Error'}}}}
+  /carts: {post: {security: [], responses: {'201': {$ref: '#/components/responses/Success'}}}}
+  /cart: {get: {security: [], responses: {'200': {$ref: '#/components/responses/Success'}}}}
+  /cart/items: {post: {security: [], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}}}}
+  /checkout/quote: {post: {requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}}}}
+  /orders: {get: {responses: {'200': {$ref: '#/components/responses/Success'}}}, post: {parameters: [{$ref: '#/components/parameters/IdempotencyKey'}], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'201': {$ref: '#/components/responses/Success'}}}}
+  /payments/attempts: {post: {parameters: [{$ref: '#/components/parameters/IdempotencyKey'}], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'201': {$ref: '#/components/responses/Success'}}}}
+components:
+  securitySchemes: {bearerAuth: {type: http, scheme: bearer, bearerFormat: JWT}}
+  parameters:
+    Page: {name: page, in: query, schema: {type: integer, minimum: 1}}
+    PageSize: {name: pageSize, in: query, schema: {type: integer, minimum: 1, maximum: 60}}
+    IdempotencyKey: {name: Idempotency-Key, in: header, required: true, schema: {type: string}}
+  requestBodies: {Json: {required: true, content: {application/json: {schema: {type: object}}}}}
+  schemas:
+    Meta: {type: object, required: [requestId, serverTime], properties: {requestId: {type: string}, serverTime: {type: string, format: date-time}}}
+    Success: {type: object, required: [data, meta], properties: {data: {}, meta: {$ref: '#/components/schemas/Meta'}}}
+    Error: {type: object, required: [error, meta], properties: {error: {type: object, required: [code,message,fields,details], properties: {code: {type: string}, message: {type: string}, fields: {type: object}, details: {type: object}}}, meta: {$ref: '#/components/schemas/Meta'}}}
+  responses:
+    Success: {description: Success, content: {application/json: {schema: {$ref: '#/components/schemas/Success'}}}}
+    Error: {description: Error, content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}}
