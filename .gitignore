@@ -1,0 +1,7 @@
+/vendor/
+/node_modules/
+.env
+/storage/logs/*.log
+.idea/
+.vscode/
+/front-pardis-book/
