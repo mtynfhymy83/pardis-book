@@ -146,6 +146,11 @@ class Server
 
         $pathOnly = explode('?', $uri, 2)[0];
 
+        // Public API documentation lives outside the versioned API router.
+        if ($this->serveApiDocumentation($pathOnly, $response)) {
+            return;
+        }
+
         // Fast health check before the pipeline.
         if ($pathOnly === '/health' || $pathOnly === '/ping') {
             $response->header('Content-Type', 'application/json; charset=utf-8');
@@ -168,6 +173,61 @@ class Server
         (new Pipeline())
             ->through($this->compiledMiddlewares)
             ->then($request, $response, $this->destinationCallable);
+    }
+
+    private function serveApiDocumentation(string $path, Response $response): bool
+    {
+        if ($path === '/openapi.yaml') {
+            $specPath = dirname(__DIR__, 3) . '/docs/openapi.yaml';
+            if (!is_file($specPath)) {
+                $response->status(404);
+                $response->header('Content-Type', 'text/plain; charset=utf-8');
+                $response->end('OpenAPI specification not found.');
+                return true;
+            }
+
+            $response->header('Content-Type', 'application/yaml; charset=utf-8');
+            $response->header('Cache-Control', 'public, max-age=300');
+            $response->header('Content-Length', (string) filesize($specPath));
+            $response->sendfile($specPath);
+            return true;
+        }
+
+        if ($path !== '/docs' && $path !== '/docs/') {
+            return false;
+        }
+
+        $html = <<<'HTML'
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pardis Book API Documentation</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css">
+  <style>body { margin: 0; background: #fafafa; }</style>
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+  <script>
+    window.onload = () => SwaggerUIBundle({
+      url: '/openapi.yaml',
+      dom_id: '#swagger-ui',
+      deepLinking: true,
+      displayRequestDuration: true,
+      persistAuthorization: true
+    });
+  </script>
+</body>
+</html>
+HTML;
+
+        $response->status(200);
+        $response->header('Content-Type', 'text/html; charset=utf-8');
+        $response->header('Cache-Control', 'no-cache');
+        $response->end($html);
+        return true;
     }
 
     private function compileStaticPayloads(): void
