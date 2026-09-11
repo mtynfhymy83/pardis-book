@@ -12,7 +12,7 @@ docker compose run --rm app php scripts/migrate.php
 docker compose up -d app worker
 ```
 
-API base: `http://localhost:9501/api/v1`. OpenAPI is in `docs/openapi.yaml`. Fake OTP codes are returned only outside production; fake payment is blocked in production unless explicitly enabled.
+API base: `http://localhost:9502/api/v1`. OpenAPI is in `docs/openapi.yaml`. Fake OTP codes are returned only outside production; fake payment is blocked in production unless explicitly enabled.
 
 ```bash
 composer test
@@ -61,9 +61,9 @@ The PDO pool is built per Swoole worker and closed on `WorkerStop`.
 ## Try it
 
 ```bash
-curl http://localhost:9501/api/v1/health/live
-curl http://localhost:9501/api/v1/products
-curl -X POST http://localhost:9501/api/v1/pricing/quote-line -H "Content-Type: application/json" -d '{"skuId":"sku_ff3_sb_2e","quantity":10}'
+curl http://localhost:9502/api/v1/health/live
+curl http://localhost:9502/api/v1/products
+curl -X POST http://localhost:9502/api/v1/pricing/quote-line -H "Content-Type: application/json" -d '{"skuId":"sku_ff3_sb_2e","quantity":10}'
 ```
 
 Every response uses the standard envelope:

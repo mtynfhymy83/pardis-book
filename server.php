@@ -33,7 +33,7 @@ if (!EnvironmentManager::getBool('SWOOLE_ENABLE_CURL_HOOK', false)) {
 
 $server = new Server(
     EnvironmentManager::get('APP_HOST', '0.0.0.0'),
-    EnvironmentManager::getInt('APP_PORT', 9501)
+    EnvironmentManager::getInt('APP_PORT', 9502)
 );
 
 $server->set([
