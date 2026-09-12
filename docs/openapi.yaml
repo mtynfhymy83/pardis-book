@@ -1,19 +1,30 @@
 openapi: 3.1.0
 info: {title: Pardis Book API, version: 0.1.0}
 servers: [{url: /api/v1}]
+tags:
+  - name: Home
+    description: APIهای مورد استفاده صفحه اصلی، ناوبری، جست‌وجوی سریع و سبد مهمان
 security: [{bearerAuth: []}]
 paths:
   /health/live: {get: {security: [], responses: {'200': {$ref: '#/components/responses/Success'}}}}
   /health/ready: {get: {security: [], responses: {'200': {$ref: '#/components/responses/Success'}, '503': {$ref: '#/components/responses/Error'}}}}
-  /bootstrap: {get: {security: [], responses: {'200': {$ref: '#/components/responses/Success'}}}}
+  /bootstrap:
+    get:
+      tags: [Home]
+      summary: تنظیمات اولیه برنامه
+      security: []
+      responses:
+        '200': {$ref: '#/components/responses/Success'}
   /home:
     get:
+      tags: [Home]
       summary: داده تجمیعی صفحه اصلی
       security: []
       responses:
         '200': {$ref: '#/components/responses/HomeSuccess'}
   /navigation:
     get:
+      tags: [Home]
       summary: منوی اصلی و درخت دسته‌بندی‌ها
       security: []
       responses:
@@ -21,9 +32,21 @@ paths:
   /auth/otp/request: {post: {security: [], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}, '429': {$ref: '#/components/responses/Error'}}}}
   /auth/otp/verify: {post: {security: [], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}, '422': {$ref: '#/components/responses/Error'}}}}
   /auth/token/refresh: {post: {security: [], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}}}}
-  /products: {get: {security: [], parameters: [{$ref: '#/components/parameters/Page'}, {$ref: '#/components/parameters/PageSize'}], responses: {'200': {$ref: '#/components/responses/Success'}}}}
+  /products:
+    get:
+      tags: [Home]
+      summary: فهرست محصولات قابل نمایش از صفحه اصلی
+      security: []
+      parameters:
+        - {$ref: '#/components/parameters/Page'}
+        - {$ref: '#/components/parameters/PageSize'}
+        - {name: q, in: query, schema: {type: string}}
+        - {name: sort, in: query, schema: {type: string, enum: [newest, bestSelling, unitPriceAsc, fastDispatch]}}
+      responses:
+        '200': {$ref: '#/components/responses/ProductCollectionSuccess'}
   /products/best-selling:
     get:
+      tags: [Home]
       summary: محصولات پرفروش بر اساس سفارش‌های پرداخت‌شده
       security: []
       parameters: [{$ref: '#/components/parameters/Limit'}]
@@ -31,21 +54,47 @@ paths:
         '200': {$ref: '#/components/responses/ProductCollectionSuccess'}
   /products/fast-dispatch:
     get:
+      tags: [Home]
       summary: محصولات موجود و آماده ارسال سریع
       security: []
       parameters: [{$ref: '#/components/parameters/Limit'}]
       responses:
         '200': {$ref: '#/components/responses/ProductCollectionSuccess'}
-  /products/{productSlug}: {get: {security: [], parameters: [{name: productSlug, in: path, required: true, schema: {type: string}}], responses: {'200': {$ref: '#/components/responses/Success'}, '404': {$ref: '#/components/responses/Error'}}}}
+  /products/{productSlug}:
+    get:
+      tags: [Home]
+      summary: جزئیات محصول انتخاب‌شده از صفحه اصلی
+      security: []
+      parameters:
+        - {name: productSlug, in: path, required: true, schema: {type: string}}
+      responses:
+        '200': {$ref: '#/components/responses/Success'}
+        '404': {$ref: '#/components/responses/Error'}
+  /series:
+    get:
+      tags: [Home]
+      summary: فهرست مجموعه‌های کتاب
+      security: []
+      responses:
+        '200': {$ref: '#/components/responses/Success'}
   /series/featured:
     get:
+      tags: [Home]
       summary: مجموعه‌های منتخب صفحه اصلی
       security: []
       parameters: [{$ref: '#/components/parameters/Limit'}]
       responses:
         '200': {$ref: '#/components/responses/Success'}
+  /categories:
+    get:
+      tags: [Home]
+      summary: فهرست دسته‌بندی‌های کاتالوگ
+      security: []
+      responses:
+        '200': {$ref: '#/components/responses/Success'}
   /search/suggestions:
     get:
+      tags: [Home]
       summary: پیشنهاد زنده محصول و مجموعه
       security: []
       parameters:
@@ -53,10 +102,72 @@ paths:
         - {$ref: '#/components/parameters/Limit'}
       responses:
         '200': {$ref: '#/components/responses/Success'}
-  /pricing/quote-line: {post: {security: [], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}, '409': {$ref: '#/components/responses/Error'}}}}
-  /carts: {post: {security: [], responses: {'201': {$ref: '#/components/responses/Success'}}}}
-  /cart: {get: {security: [], responses: {'200': {$ref: '#/components/responses/Success'}}}}
-  /cart/items: {post: {security: [], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}}}}
+  /skus/{skuId}/pricing:
+    get:
+      tags: [Home]
+      summary: قیمت پلکانی SKU انتخاب‌شده
+      security: []
+      parameters:
+        - {name: skuId, in: path, required: true, schema: {type: string}}
+      responses:
+        '200': {$ref: '#/components/responses/Success'}
+        '404': {$ref: '#/components/responses/Error'}
+  /pricing/quote-line:
+    post:
+      tags: [Home]
+      summary: محاسبه قیمت یک SKU برای تعداد مشخص
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PricingQuoteLineRequest'}
+      responses:
+        '200': {$ref: '#/components/responses/Success'}
+        '409': {$ref: '#/components/responses/Error'}
+  /carts:
+    post:
+      tags: [Home]
+      summary: ساخت سبد مهمان
+      security: []
+      responses:
+        '201': {$ref: '#/components/responses/Success'}
+  /cart:
+    get:
+      tags: [Home]
+      summary: دریافت سبد جاری و شمارنده هدر
+      security: []
+      parameters:
+        - {$ref: '#/components/parameters/GuestCartToken'}
+      responses:
+        '200': {$ref: '#/components/responses/Success'}
+        '404': {$ref: '#/components/responses/Error'}
+  /cart/items:
+    post:
+      tags: [Home]
+      summary: افزودن SKU از کارت محصول به سبد
+      security: []
+      parameters:
+        - {$ref: '#/components/parameters/GuestCartToken'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CartItemRequest'}
+      responses:
+        '200': {$ref: '#/components/responses/Success'}
+        '404': {$ref: '#/components/responses/Error'}
+        '409': {$ref: '#/components/responses/Error'}
+  /cart/validate:
+    post:
+      tags: [Home]
+      summary: قیمت‌گذاری مجدد و اعتبارسنجی سبد جاری
+      security: []
+      parameters:
+        - {$ref: '#/components/parameters/GuestCartToken'}
+      responses:
+        '200': {$ref: '#/components/responses/Success'}
+        '404': {$ref: '#/components/responses/Error'}
   /checkout/quote: {post: {requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}}}}
   /orders: {get: {responses: {'200': {$ref: '#/components/responses/Success'}}}, post: {parameters: [{$ref: '#/components/parameters/IdempotencyKey'}], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'201': {$ref: '#/components/responses/Success'}}}}
   /payments/attempts: {post: {parameters: [{$ref: '#/components/parameters/IdempotencyKey'}], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'201': {$ref: '#/components/responses/Success'}}}}
@@ -66,12 +177,30 @@ components:
     Page: {name: page, in: query, schema: {type: integer, minimum: 1}}
     PageSize: {name: pageSize, in: query, schema: {type: integer, minimum: 1, maximum: 60}}
     Limit: {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 60}}
+    GuestCartToken:
+      name: X-Guest-Cart-Token
+      in: header
+      required: false
+      description: توکن دریافت‌شده از POST /carts برای سبد مهمان
+      schema: {type: string}
     IdempotencyKey: {name: Idempotency-Key, in: header, required: true, schema: {type: string}}
   requestBodies: {Json: {required: true, content: {application/json: {schema: {type: object}}}}}
   schemas:
     Meta: {type: object, required: [requestId, serverTime], properties: {requestId: {type: string}, serverTime: {type: string, format: date-time}}}
     Success: {type: object, required: [data, meta], properties: {data: {}, meta: {$ref: '#/components/schemas/Meta'}}}
     Error: {type: object, required: [error, meta], properties: {error: {type: object, required: [code,message,fields,details], properties: {code: {type: string}, message: {type: string}, fields: {type: object}, details: {type: object}}}, meta: {$ref: '#/components/schemas/Meta'}}}
+    PricingQuoteLineRequest:
+      type: object
+      required: [skuId, quantity]
+      properties:
+        skuId: {type: string, example: sku_ff3_sb_2e}
+        quantity: {type: integer, minimum: 1, example: 10}
+    CartItemRequest:
+      type: object
+      required: [skuId, quantity]
+      properties:
+        skuId: {type: string, example: sku_ff3_sb_2e}
+        quantity: {type: integer, minimum: 1, example: 5}
     Cover:
       type: [object, 'null']
       properties:
