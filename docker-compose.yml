@@ -1,4 +1,10 @@
 services:
+  frontend:
+    build: ./front-pardis-book
+    ports: ["3000:80"]
+    restart: unless-stopped
+    depends_on:
+      app: { condition: service_started }
   app:
     build: .
     ports: ["9502:9502"]

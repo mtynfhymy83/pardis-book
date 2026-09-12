@@ -13,12 +13,17 @@ return static function (Router $r): void {
     $r->get('v1', '/health/ready', SystemController::class, 'ready');
     $r->get('v1', '/bootstrap', SystemController::class, 'bootstrap');
     $r->get('v1', '/home', SystemController::class, 'home');
+    $r->get('v1', '/navigation', SystemController::class, 'navigation');
     $r->post('v1', '/auth/otp/request', AuthController::class, 'requestOtp');
     $r->post('v1', '/auth/otp/verify', AuthController::class, 'verifyOtp');
     $r->post('v1', '/auth/token/refresh', AuthController::class, 'refresh');
     $r->get('v1', '/products', CatalogController::class, 'products');
+    $r->get('v1', '/products/best-selling', CatalogController::class, 'bestSelling');
+    $r->get('v1', '/products/fast-dispatch', CatalogController::class, 'fastDispatch');
     $r->get('v1', '/products/{productSlug}', CatalogController::class, 'product');
     $r->get('v1', '/series', CatalogController::class, 'series');
+    $r->get('v1', '/series/featured', CatalogController::class, 'featuredSeries');
+    $r->get('v1', '/search/suggestions', CatalogController::class, 'searchSuggestions');
     $r->get('v1', '/publishers', CatalogController::class, 'publishers');
     $r->get('v1', '/categories', CatalogController::class, 'categories');
     $r->get('v1', '/skus/{skuId}/pricing', CatalogController::class, 'pricing');

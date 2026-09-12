@@ -6,12 +6,53 @@ paths:
   /health/live: {get: {security: [], responses: {'200': {$ref: '#/components/responses/Success'}}}}
   /health/ready: {get: {security: [], responses: {'200': {$ref: '#/components/responses/Success'}, '503': {$ref: '#/components/responses/Error'}}}}
   /bootstrap: {get: {security: [], responses: {'200': {$ref: '#/components/responses/Success'}}}}
-  /home: {get: {security: [], responses: {'200': {$ref: '#/components/responses/Success'}}}}
+  /home:
+    get:
+      summary: داده تجمیعی صفحه اصلی
+      security: []
+      responses:
+        '200': {$ref: '#/components/responses/HomeSuccess'}
+  /navigation:
+    get:
+      summary: منوی اصلی و درخت دسته‌بندی‌ها
+      security: []
+      responses:
+        '200': {$ref: '#/components/responses/Success'}
   /auth/otp/request: {post: {security: [], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}, '429': {$ref: '#/components/responses/Error'}}}}
   /auth/otp/verify: {post: {security: [], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}, '422': {$ref: '#/components/responses/Error'}}}}
   /auth/token/refresh: {post: {security: [], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}}}}
   /products: {get: {security: [], parameters: [{$ref: '#/components/parameters/Page'}, {$ref: '#/components/parameters/PageSize'}], responses: {'200': {$ref: '#/components/responses/Success'}}}}
+  /products/best-selling:
+    get:
+      summary: محصولات پرفروش بر اساس سفارش‌های پرداخت‌شده
+      security: []
+      parameters: [{$ref: '#/components/parameters/Limit'}]
+      responses:
+        '200': {$ref: '#/components/responses/ProductCollectionSuccess'}
+  /products/fast-dispatch:
+    get:
+      summary: محصولات موجود و آماده ارسال سریع
+      security: []
+      parameters: [{$ref: '#/components/parameters/Limit'}]
+      responses:
+        '200': {$ref: '#/components/responses/ProductCollectionSuccess'}
   /products/{productSlug}: {get: {security: [], parameters: [{name: productSlug, in: path, required: true, schema: {type: string}}], responses: {'200': {$ref: '#/components/responses/Success'}, '404': {$ref: '#/components/responses/Error'}}}}
+  /series/featured:
+    get:
+      summary: مجموعه‌های منتخب صفحه اصلی
+      security: []
+      parameters: [{$ref: '#/components/parameters/Limit'}]
+      responses:
+        '200': {$ref: '#/components/responses/Success'}
+  /search/suggestions:
+    get:
+      summary: پیشنهاد زنده محصول و مجموعه
+      security: []
+      parameters:
+        - {name: q, in: query, required: true, schema: {type: string, minLength: 2}}
+        - {$ref: '#/components/parameters/Limit'}
+      responses:
+        '200': {$ref: '#/components/responses/Success'}
   /pricing/quote-line: {post: {security: [], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}, '409': {$ref: '#/components/responses/Error'}}}}
   /carts: {post: {security: [], responses: {'201': {$ref: '#/components/responses/Success'}}}}
   /cart: {get: {security: [], responses: {'200': {$ref: '#/components/responses/Success'}}}}
@@ -24,12 +65,67 @@ components:
   parameters:
     Page: {name: page, in: query, schema: {type: integer, minimum: 1}}
     PageSize: {name: pageSize, in: query, schema: {type: integer, minimum: 1, maximum: 60}}
+    Limit: {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 60}}
     IdempotencyKey: {name: Idempotency-Key, in: header, required: true, schema: {type: string}}
   requestBodies: {Json: {required: true, content: {application/json: {schema: {type: object}}}}}
   schemas:
     Meta: {type: object, required: [requestId, serverTime], properties: {requestId: {type: string}, serverTime: {type: string, format: date-time}}}
     Success: {type: object, required: [data, meta], properties: {data: {}, meta: {$ref: '#/components/schemas/Meta'}}}
     Error: {type: object, required: [error, meta], properties: {error: {type: object, required: [code,message,fields,details], properties: {code: {type: string}, message: {type: string}, fields: {type: object}, details: {type: object}}}, meta: {$ref: '#/components/schemas/Meta'}}}
+    Cover:
+      type: [object, 'null']
+      properties:
+        url: {type: string, format: uri}
+        alt: {type: string}
+    ProductSummary:
+      type: object
+      required: [id, slug, title, cover, defaultSku]
+      properties:
+        id: {type: string}
+        slug: {type: string}
+        title: {type: string}
+        subtitle: {type: [string, 'null']}
+        series: {type: [object, 'null']}
+        publisher: {type: [object, 'null']}
+        cover: {$ref: '#/components/schemas/Cover'}
+        defaultSku:
+          type: [object, 'null']
+          properties:
+            id: {type: string}
+            attributes: {type: object}
+            minimumQuantity: {type: integer}
+            startingUnitPrice: {type: integer}
+            referenceUnitPrice: {type: integer}
+            availableQuantity: {type: integer}
+            availability: {type: string}
+            fastDispatch: {type: boolean}
+    Home:
+      type: object
+      required: [hero, benefits, featuredSeries, bestSelling, fastDispatch, wholesaleSteps, contact]
+      properties:
+        hero: {type: object}
+        benefits: {type: array, items: {type: object}}
+        featuredSeries: {type: array, items: {type: object}}
+        bestSelling: {type: array, items: {$ref: '#/components/schemas/ProductSummary'}}
+        fastDispatch: {type: array, items: {$ref: '#/components/schemas/ProductSummary'}}
+        wholesaleSteps: {type: array, items: {type: object}}
+        contact: {type: object}
   responses:
     Success: {description: Success, content: {application/json: {schema: {$ref: '#/components/schemas/Success'}}}}
     Error: {description: Error, content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}}
+    ProductCollectionSuccess:
+      description: Product collection
+      content:
+        application/json:
+          schema:
+            allOf:
+              - {$ref: '#/components/schemas/Success'}
+              - {type: object, properties: {data: {type: array, items: {$ref: '#/components/schemas/ProductSummary'}}}}
+    HomeSuccess:
+      description: Home aggregate
+      content:
+        application/json:
+          schema:
+            allOf:
+              - {$ref: '#/components/schemas/Success'}
+              - {type: object, properties: {data: {$ref: '#/components/schemas/Home'}}}

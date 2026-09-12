@@ -17,6 +17,7 @@ use App\Domain\Contracts\Repositories\NoteRepositoryInterface;
 use App\Infrastructure\Persistence\Repositories\NoteRepository;
 use App\Application\Services\AuthService;
 use App\Application\Services\CatalogService;
+use App\Application\Services\HomeService;
 use App\Application\Services\CartService;
 use App\Domain\Services\PricingEngine;
 use App\Domain\Services\OrderStateMachine;
@@ -42,7 +43,7 @@ return function (): ContainerInterface {
         NoteRepositoryInterface::class => autowire(NoteRepository::class),
         NoteService::class    => autowire(),
         NoteRepository::class => autowire(),
-        AuthService::class => autowire(), CatalogService::class => autowire(), CartService::class => autowire(),
+        AuthService::class => autowire(), CatalogService::class => autowire(), HomeService::class => autowire(), CartService::class => autowire(),
         PricingEngine::class => autowire(), OrderStateMachine::class => autowire(),
         CheckoutService::class => autowire(), PaymentGatewayInterface::class => autowire(FakePaymentGateway::class), FakePaymentGateway::class => autowire(),
     ]);
