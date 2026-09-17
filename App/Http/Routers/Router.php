@@ -6,6 +6,9 @@ namespace App\Http\Routers;
 
 use App\Http\Concerns\ResponseTrait;
 use App\Http\Middlewares\CheckAccessMiddleware;
+use App\Application\Security\JwtAuthenticator;
+use App\Shared\Exceptions\ApiException;
+use App\Shared\Http\ApiResponse;
 use App\Framework\Exceptions\Handler\ExceptionHandler;
 use App\Framework\Bootstrap\Container;
 use Psr\Container\ContainerInterface;
@@ -48,7 +51,7 @@ class Router
     public function __construct(?ContainerInterface $container = null)
     {
         $this->container = $container ?? Container::getInstance();
-        $this->accessMiddleware = new CheckAccessMiddleware();
+        $this->accessMiddleware = $this->resolveAccessMiddleware();
         $this->useControllerCache = (($_ENV['CONTROLLER_CACHE'] ?? 'false') === 'true');
         $this->exceptionHandler = new ExceptionHandler();
     }
@@ -174,7 +177,7 @@ class Router
             return $this->sendResponse(null, 'OK', false, 200);
         }
 
-        return $this->sendResponse(null, "Route Not Found ($path)", true, 404);
+        return ApiResponse::error('مسیر درخواست‌شده یافت نشد.', 404, ['path' => $path], code: 'ROUTE_NOT_FOUND');
     }
 
     private function handleRoute(array $route, ?Request $request, array $params): mixed
@@ -315,9 +318,13 @@ class Router
         if (str_contains($ctype, 'application/json')) {
             $raw = $request->rawContent();
             try {
-                return !empty($raw) ? (json_decode($raw, true, 512, JSON_THROW_ON_ERROR) ?? []) : [];
-            } catch (\JsonException) {
-                return [];
+                $decoded = !empty($raw) ? json_decode($raw, true, 512, JSON_THROW_ON_ERROR) : [];
+                if (!is_array($decoded)) {
+                    throw new \JsonException('JSON root must be an object.');
+                }
+                return $decoded;
+            } catch (\JsonException $e) {
+                throw new ApiException('VALIDATION_FAILED', 'بدنه JSON معتبر نیست.', 400, ['body' => 'ساختار JSON نامعتبر است.'], ['reason' => $e->getMessage()]);
             }
         }
 
@@ -327,13 +334,13 @@ class Router
     private function checkAccess(mixed $access, bool $inaccess, ?Request $request): void
     {
         if ($access) {
-            $roles = match ($access) {
-                'owners' => ['support', 'admin'],
-                'owner'  => ['owner'],
-                'all', 'auth' => ['owner', 'support', 'admin', 'operator', 'teacher', 'guest', 'user'],
+            $requirements = match ($access) {
+                'owners' => ['admin', 'super_admin'],
+                'owner'  => ['super_admin'],
+                'all', 'auth' => [],
                 default  => is_array($access) ? $access : [$access],
             };
-            $this->accessMiddleware->checkAccess($roles, $request);
+            $this->accessMiddleware->checkAccess($requirements, $request);
         }
     }
 
@@ -418,5 +425,18 @@ class Router
         }
 
         return new $controllerClass();
+    }
+
+    private function resolveAccessMiddleware(): CheckAccessMiddleware
+    {
+        if ($this->container !== null) {
+            try {
+                return $this->container->get(CheckAccessMiddleware::class);
+            } catch (\Throwable $e) {
+                error_log('[DI Warning] Failed to resolve access middleware: ' . $e->getMessage());
+            }
+        }
+
+        return new CheckAccessMiddleware(new JwtAuthenticator());
     }
 }

@@ -13,6 +13,8 @@ use App\Http\UriParser;
 use App\Http\Routers\Router;
 use App\Http\Middlewares\ServerErrorMiddleware;
 use App\Infrastructure\Database\DB;
+use App\Shared\Http\ApiResponse;
+use App\Shared\Http\RequestId;
 use Swoole\Http\Request;
 use Swoole\Http\Response;
 use Swoole\Http\Server as SwooleServer;
@@ -48,9 +50,6 @@ class Server
 
     /** cached final destination closure */
     private $destinationCallable = null;
-
-    private string $serviceUnavailablePayload = '';
-    private string $methodNotAllowedPayload = '';
 
     public function __construct(string $host, int $port)
     {
@@ -98,7 +97,6 @@ class Server
 
     public function start(): void
     {
-        $this->compileStaticPayloads();
         $this->compileMiddlewares();
         $this->compileDestination();
 
@@ -117,10 +115,11 @@ class Server
         });
 
         $this->http->on('Request', function (Request $request, Response $response) {
+            $this->initializeRequestContext($request, $response);
             if (!$this->isReady) {
-                $response->status(503);
-                $response->header('Content-Type', 'application/json; charset=utf-8');
-                $response->end($this->serviceUnavailablePayload);
+                $payload = ApiResponse::error('سرویس موقتاً در دسترس نیست.', 503, code: 'DEPENDENCY_UNAVAILABLE');
+                unset($payload['__status']);
+                (new ResponseHelper($response))->json($payload, 503);
                 return;
             }
             $this->handleRequest($request, $response);
@@ -131,11 +130,6 @@ class Server
 
     private function handleRequest(Request $request, Response $response): void
     {
-        Context::clear();
-        Context::set('request', $request);
-        Context::set('response', $response);
-        Context::set('swoole.server', $this->http);
-
         $uri = $request->server['request_uri'] ?? '/';
 
         if ($uri === '/favicon.ico') {
@@ -164,9 +158,9 @@ class Server
 
         $method = Method::tryFromRequest($request->server['request_method'] ?? 'GET');
         if ($method === null) {
-            $response->status(405);
-            $response->header('Content-Type', 'application/json; charset=utf-8');
-            $response->end($this->methodNotAllowedPayload);
+            $payload = ApiResponse::error('متد HTTP پشتیبانی نمی‌شود.', 405, code: 'METHOD_NOT_ALLOWED');
+            unset($payload['__status']);
+            (new ResponseHelper($response))->json($payload, 405);
             return;
         }
 
@@ -230,16 +224,15 @@ HTML;
         return true;
     }
 
-    private function compileStaticPayloads(): void
+    private function initializeRequestContext(Request $request, Response $response): void
     {
-        $this->serviceUnavailablePayload = json_encode([
-            'success' => false, 'status' => 503,
-            'message' => 'Service temporarily unavailable (worker is warming up).', 'data' => null,
-        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '{}';
-
-        $this->methodNotAllowedPayload = json_encode([
-            'success' => false, 'status' => 405, 'message' => 'Method Not Allowed', 'data' => null,
-        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '{}';
+        Context::clear();
+        Context::set('request', $request);
+        Context::set('response', $response);
+        Context::set('swoole.server', $this->http);
+        $requestId = RequestId::resolve($request->header['x-request-id'] ?? null);
+        Context::set('request_id', $requestId);
+        $response->header('X-Request-Id', $requestId);
     }
 
     private function compileMiddlewares(): void

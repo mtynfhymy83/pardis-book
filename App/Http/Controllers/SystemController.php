@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Application\Services\HomeService;
 use App\Infrastructure\Database\DB;
+use App\Shared\Exceptions\ApiException;
 
 final class SystemController extends Controller
 {
@@ -20,7 +21,11 @@ final class SystemController extends Controller
 
     public function ready(): array
     {
-        DB::fetch('SELECT 1');
+        try {
+            DB::fetch('SELECT 1');
+        } catch (\Throwable $exception) {
+            throw new ApiException('DEPENDENCY_UNAVAILABLE', 'اتصال دیتابیس در دسترس نیست.', 503, previous: $exception);
+        }
         return $this->ok(['status' => 'ready', 'database' => 'ok']);
     }
 

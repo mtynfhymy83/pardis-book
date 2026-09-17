@@ -14,6 +14,12 @@ docker compose up -d app worker
 
 API base: `http://localhost:9502/api/v1`. OpenAPI is in `docs/openapi.yaml`. Fake OTP codes are returned only outside production; fake payment is blocked in production unless explicitly enabled.
 
+Swagger UI is available at `http://localhost:9502/docs`. Platform endpoints are grouped under `Phase 0 / Platform`. Authenticated requests are checked against the persisted session plus database-backed roles and permissions; access tokens therefore become invalid as soon as their session is revoked.
+
+The worker releases expired inventory reservations, dispatches outbox records with bounded exponential retry/dead-letter handling, and periodically removes expired OTP, session, and idempotency records.
+
+Public catalog endpoints return cache-friendly `Cache-Control` headers. Product listing and search enforce a 60-item page limit, whitelist sorting, normalize Persian text, select an explicit default SKU, and use database indexes for published catalog, text search, SKU attributes, price tiers, and inventory reads.
+
 ```bash
 composer test
 composer analyse

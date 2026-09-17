@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http;
 
+use App\Framework\Coroutine\Context;
 use Swoole\Http\Response;
 
 /**
@@ -18,6 +19,7 @@ class ResponseHelper
 
     public function json(mixed $data, int $status = 200, array $headers = []): void
     {
+        Context::set('response_status', $status);
         $this->response->header('Content-Type', 'application/json; charset=utf-8');
 
         foreach ($headers as $key => $value) {
@@ -38,6 +40,7 @@ class ResponseHelper
 
     public function text(string $content, int $status = 200): void
     {
+        Context::set('response_status', $status);
         $this->response->header('Content-Type', 'text/plain; charset=utf-8');
         $this->response->status($status);
         $this->response->end($content);
@@ -45,6 +48,7 @@ class ResponseHelper
 
     public function html(string $content, int $status = 200): void
     {
+        Context::set('response_status', $status);
         $this->response->header('Content-Type', 'text/html; charset=utf-8');
         $this->response->status($status);
         $this->response->end($content);
@@ -52,6 +56,7 @@ class ResponseHelper
 
     public function content(string $data, string $contentType, int $status = 200, array $headers = []): void
     {
+        Context::set('response_status', $status);
         $normalized = strtolower($contentType);
         $this->response->header(
             'Content-Type',
@@ -79,6 +84,7 @@ class ResponseHelper
         }
 
         $filename ??= basename($filePath);
+        Context::set('response_status', 200);
 
         $this->response->header('Content-Type', $contentType);
         $this->response->header('Content-Disposition', 'attachment; filename="' . addslashes($filename) . '"');
@@ -93,6 +99,7 @@ class ResponseHelper
 
     public function redirect(string $url, int $status = 302): void
     {
+        Context::set('response_status', $status);
         $this->response->header('Location', $url);
         $this->response->status($status);
         $this->response->end();

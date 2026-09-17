@@ -1,0 +1,4 @@
+<?php
+declare(strict_types=1); namespace App\Http\Controllers;
+use App\Application\Services\AdminConfigurationService; use Swoole\Http\Request;
+final class AdminConfigurationController extends Controller { public function __construct(private AdminConfigurationService $config){} public function coupons():array{return $this->ok($this->config->coupons());} public function createCoupon(Request $r,array $d):array{return $this->created($this->config->createCoupon($this->requireAuthUserId($r),$d));} public function updateCoupon(Request $r,string $couponId,array $d):array{return $this->ok($this->config->updateCoupon($this->requireAuthUserId($r),$couponId,$d));} public function setting(string $setting):array{return $this->ok($this->config->setting($setting));} public function saveSetting(Request $r,string $setting,array $d):array{return $this->ok($this->config->saveSetting($this->requireAuthUserId($r),$setting,$d));} }

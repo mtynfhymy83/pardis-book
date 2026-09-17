@@ -24,6 +24,21 @@ use App\Domain\Services\OrderStateMachine;
 use App\Application\Services\CheckoutService;
 use App\Domain\Contracts\Providers\PaymentGatewayInterface;
 use App\Infrastructure\Providers\FakePaymentGateway;
+use App\Application\Security\JwtAuthenticator;
+use App\Application\Services\IdempotencyService;
+use App\Application\Services\AuditService;
+use App\Application\Services\OutboxService;
+use App\Application\Services\ContentService;
+use App\Application\Services\AccountService;
+use App\Application\Services\OrderService;
+use App\Application\Services\SupportService;
+use App\Application\Services\AdminOperationsService;
+use App\Application\Services\AdminCatalogService;
+use App\Application\Services\AdminConfigurationService;
+use App\Application\Services\ReportService;
+use App\Domain\Contracts\Providers\ObjectStorageInterface;
+use App\Infrastructure\Providers\S3ObjectStorage;
+use App\Http\Middlewares\CheckAccessMiddleware;
 
 /**
  * DI bindings. Pattern for every feature:
@@ -46,6 +61,18 @@ return function (): ContainerInterface {
         AuthService::class => autowire(), CatalogService::class => autowire(), HomeService::class => autowire(), CartService::class => autowire(),
         PricingEngine::class => autowire(), OrderStateMachine::class => autowire(),
         CheckoutService::class => autowire(), PaymentGatewayInterface::class => autowire(FakePaymentGateway::class), FakePaymentGateway::class => autowire(),
+        JwtAuthenticator::class => autowire(), CheckAccessMiddleware::class => autowire(),
+        IdempotencyService::class => autowire(), AuditService::class => autowire(), OutboxService::class => autowire(),
+        ContentService::class => autowire(),
+        AccountService::class => autowire(),
+        OrderService::class => autowire(),
+        SupportService::class => autowire(),
+        AdminOperationsService::class => autowire(),
+        AdminCatalogService::class => autowire(),
+        AdminConfigurationService::class => autowire(),
+        ReportService::class => autowire(),
+        ObjectStorageInterface::class => autowire(S3ObjectStorage::class),
+        S3ObjectStorage::class => autowire(),
     ]);
 
     // Compile the container in production for speed:

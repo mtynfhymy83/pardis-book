@@ -14,6 +14,8 @@ use App\Framework\Bootstrap\Server;
 use App\Framework\Bootstrap\WorkerBootstrapper;
 use App\Http\Middlewares\CorsMiddleware;
 use App\Http\Middlewares\RequestContextMiddleware;
+use App\Http\Middlewares\RequestObservabilityMiddleware;
+use App\Http\Middlewares\RateLimitMiddleware;
 use Swoole\Http\Server as SwooleServer;
 
 EnvironmentManager::initialize();
@@ -49,6 +51,8 @@ $server->set([
 $server
     ->debug(EnvironmentManager::getBool('APP_DEBUG', false))
     ->addMiddleware(new RequestContextMiddleware())
+    ->addMiddleware(new RequestObservabilityMiddleware())
+    ->addMiddleware(new RateLimitMiddleware())
     ->addMiddleware(new CorsMiddleware())
     // Register more middlewares here, e.g. new AuthMiddleware()
     ->onWorkerStart(function (SwooleServer $swoole, int $workerId, Server $app) {

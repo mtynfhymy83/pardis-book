@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Middlewares;
 
+use App\Framework\Exceptions\Handler\ExceptionHandler;
 use App\Framework\Core\MiddlewareInterface;
+use App\Http\ResponseHelper;
 use Swoole\Http\Request;
 use Swoole\Http\Response;
 
@@ -15,8 +17,11 @@ use Swoole\Http\Response;
  */
 class ServerErrorMiddleware implements MiddlewareInterface
 {
-    public function __construct(private bool $debug = false)
+    private ExceptionHandler $exceptionHandler;
+
+    public function __construct(bool $debug = false)
     {
+        $this->exceptionHandler = new ExceptionHandler($debug);
     }
 
     public function handle(Request $request, Response $response, callable $next): mixed
@@ -35,20 +40,9 @@ class ServerErrorMiddleware implements MiddlewareInterface
             return;
         }
 
-        $code = (int) $e->getCode();
-        $status = ($code >= 400 && $code <= 599) ? $code : 500;
-
-        $response->status($status);
-        $response->header('Content-Type', 'application/json; charset=utf-8');
-        $response->header('Access-Control-Allow-Origin', '*');
-
-        $response->end(json_encode([
-            'success' => false,
-            'status'  => $status,
-            'message' => $this->debug ? $e->getMessage() : ($status === 500 ? 'Internal Server Error' : $e->getMessage()),
-            'data'    => $this->debug ? ['trace' => $e->getTraceAsString()] : null,
-        ], JSON_UNESCAPED_UNICODE));
-
-        error_log(sprintf('[ServerError] %s in %s:%d', $e->getMessage(), $e->getFile(), $e->getLine()));
+        $payload = $this->exceptionHandler->handle($e);
+        $status = (int) ($payload['__status'] ?? 500);
+        unset($payload['__status']);
+        (new ResponseHelper($response))->json($payload, $status);
     }
 }

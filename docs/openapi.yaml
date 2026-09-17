@@ -2,39 +2,94 @@ openapi: 3.1.0
 info: {title: Pardis Book API, version: 0.1.0}
 servers: [{url: /api/v1}]
 tags:
+  - name: Phase 0 / Platform
+    description: سلامت سرویس، آمادگی وابستگی‌ها و قرارداد اولیه کلاینت
   - name: Home
     description: APIهای مورد استفاده صفحه اصلی، ناوبری، جست‌وجوی سریع و سبد مهمان
+  - name: Phase 1 / Home
+    description: داده‌های Cacheable صفحه اصلی و ناوبری عمومی
+  - name: Phase 1 / Catalog
+    description: کاتالوگ، مجموعه، Taxonomy و Facetهای عمومی
+  - name: Phase 1 / Search
+    description: جست‌وجوی کامل و پیشنهاد زنده
+  - name: Phase 1 / Pricing
+    description: قیمت پلکانی و کنترل هم‌زمان موجودی
+  - name: Phase 2 / Auth
+    description: OTP، نشست‌ها و خروج امن
+  - name: Phase 2 / Account
+    description: پروفایل و اطلاعات تجاری کاربر
+  - name: Phase 2 / Addresses
+    description: نشانی‌های نسخه‌دار کاربر
+  - name: Phase 2 / Cart
+    description: سبد نسخه‌دار مهمان و کاربر
+  - name: Phase 2 / Coupon
+    description: اعمال و حذف کد تخفیف از سبد
+  - name: Phase 3 / Payment
+    description: تلاش پرداخت، بازگشت و وب‌هوک تأییدشده
+  - name: Phase 3 / Orders
+    description: عملیات سفارش، فاکتور و مرسوله
+  - name: Phase 4 / Support
+    description: تیکت‌های مشتری و مکاتبات پشتیبانی
+  - name: Phase 4 / Admin Operations
+    description: عملیات سفارش، پرداخت، ارسال و مشتریان پنل مدیریت
+  - name: Phase 4 / Reports
+    description: گزارش‌های عملیاتی محافظت‌شده پنل مدیریت
+  - name: Phase 4 / Catalog Admin
+    description: مدیریت محصول، قیمت‌گذاری و موجودی
+  - name: Phase 4 / Configuration
+    description: کوپن‌ها و تنظیمات فروشگاه پنل مدیریت
+  - name: Phase 5 / Hardening
+    description: محدودسازی نرخ و حفاظت عملیاتی مسیرهای حساس
 security: [{bearerAuth: []}]
 paths:
-  /health/live: {get: {security: [], responses: {'200': {$ref: '#/components/responses/Success'}}}}
-  /health/ready: {get: {security: [], responses: {'200': {$ref: '#/components/responses/Success'}, '503': {$ref: '#/components/responses/Error'}}}}
+  /health/live:
+    get:
+      tags: [Phase 0 / Platform]
+      operationId: platformLiveness
+      summary: بررسی زنده‌بودن پردازش API
+      security: []
+      parameters: [{$ref: '#/components/parameters/RequestId'}]
+      responses:
+        '200': {$ref: '#/components/responses/HealthLiveSuccess'}
+  /health/ready:
+    get:
+      tags: [Phase 0 / Platform]
+      operationId: platformReadiness
+      summary: بررسی آمادگی API و اتصال دیتابیس
+      security: []
+      parameters: [{$ref: '#/components/parameters/RequestId'}]
+      responses:
+        '200': {$ref: '#/components/responses/HealthReadySuccess'}
+        '503': {$ref: '#/components/responses/Error'}
   /bootstrap:
     get:
-      tags: [Home]
+      tags: [Phase 0 / Platform]
+      operationId: platformBootstrap
       summary: تنظیمات اولیه برنامه
       security: []
+      parameters: [{$ref: '#/components/parameters/RequestId'}]
       responses:
-        '200': {$ref: '#/components/responses/Success'}
+        '200': {$ref: '#/components/responses/BootstrapSuccess'}
   /home:
     get:
-      tags: [Home]
+      tags: [Phase 1 / Home]
       summary: داده تجمیعی صفحه اصلی
       security: []
       responses:
         '200': {$ref: '#/components/responses/HomeSuccess'}
   /navigation:
     get:
-      tags: [Home]
+      tags: [Phase 1 / Home]
       summary: منوی اصلی و درخت دسته‌بندی‌ها
       security: []
       responses:
         '200': {$ref: '#/components/responses/Success'}
-  /auth/otp/request: {post: {security: [], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}, '429': {$ref: '#/components/responses/Error'}}}}
-  /auth/otp/verify: {post: {security: [], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}, '422': {$ref: '#/components/responses/Error'}}}}
-  /auth/token/refresh: {post: {security: [], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}}}}
+  /auth/otp/request: {post: {tags: [Phase 2 / Auth, Phase 5 / Hardening], security: [], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}, '429': {$ref: '#/components/responses/Error'}}}}
+  /auth/otp/verify: {post: {tags: [Phase 2 / Auth, Phase 5 / Hardening], security: [], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}, '422': {$ref: '#/components/responses/Error'}, '429': {$ref: '#/components/responses/Error'}}}}
+  /auth/token/refresh: {post: {tags: [Phase 2 / Auth], security: [], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}}}}
   /products:
     get:
-      tags: [Home]
+      tags: [Phase 1 / Catalog]
       summary: فهرست محصولات قابل نمایش از صفحه اصلی
       security: []
       parameters:
@@ -46,7 +101,7 @@ paths:
         '200': {$ref: '#/components/responses/ProductCollectionSuccess'}
   /products/best-selling:
     get:
-      tags: [Home]
+      tags: [Phase 1 / Home]
       summary: محصولات پرفروش بر اساس سفارش‌های پرداخت‌شده
       security: []
       parameters: [{$ref: '#/components/parameters/Limit'}]
@@ -54,7 +109,7 @@ paths:
         '200': {$ref: '#/components/responses/ProductCollectionSuccess'}
   /products/fast-dispatch:
     get:
-      tags: [Home]
+      tags: [Phase 1 / Home]
       summary: محصولات موجود و آماده ارسال سریع
       security: []
       parameters: [{$ref: '#/components/parameters/Limit'}]
@@ -62,7 +117,7 @@ paths:
         '200': {$ref: '#/components/responses/ProductCollectionSuccess'}
   /products/{productSlug}:
     get:
-      tags: [Home]
+      tags: [Phase 1 / Catalog]
       summary: جزئیات محصول انتخاب‌شده از صفحه اصلی
       security: []
       parameters:
@@ -70,31 +125,75 @@ paths:
       responses:
         '200': {$ref: '#/components/responses/Success'}
         '404': {$ref: '#/components/responses/Error'}
+  /products/{productSlug}/related:
+    get:
+      tags: [Phase 1 / Catalog]
+      summary: محصولات مرتبط با محصول انتخاب‌شده
+      security: []
+      parameters:
+        - {name: productSlug, in: path, required: true, schema: {type: string}}
+        - {$ref: '#/components/parameters/Limit'}
+      responses:
+        '200': {$ref: '#/components/responses/ProductCollectionSuccess'}
+        '404': {$ref: '#/components/responses/Error'}
   /series:
     get:
-      tags: [Home]
+      tags: [Phase 1 / Catalog]
       summary: فهرست مجموعه‌های کتاب
       security: []
       responses:
         '200': {$ref: '#/components/responses/Success'}
   /series/featured:
     get:
-      tags: [Home]
+      tags: [Phase 1 / Catalog]
       summary: مجموعه‌های منتخب صفحه اصلی
       security: []
       parameters: [{$ref: '#/components/parameters/Limit'}]
       responses:
         '200': {$ref: '#/components/responses/Success'}
+  /series/{seriesSlug}:
+    get:
+      tags: [Phase 1 / Catalog]
+      summary: Landing مجموعه و محصولات آن
+      security: []
+      parameters:
+        - {name: seriesSlug, in: path, required: true, schema: {type: string}}
+        - {$ref: '#/components/parameters/Page'}
+        - {$ref: '#/components/parameters/PageSize'}
+      responses:
+        '200': {$ref: '#/components/responses/Success'}
+        '404': {$ref: '#/components/responses/Error'}
+  /publishers:
+    get:
+      tags: [Phase 1 / Catalog]
+      summary: ناشران کاتالوگ
+      security: []
+      responses: {'200': {$ref: '#/components/responses/Success'}}
   /categories:
     get:
-      tags: [Home]
+      tags: [Phase 1 / Catalog]
       summary: فهرست دسته‌بندی‌های کاتالوگ
       security: []
       responses:
         '200': {$ref: '#/components/responses/Success'}
+  /catalog/facets:
+    get:
+      tags: [Phase 1 / Catalog]
+      summary: مقادیر و شمارش Facetهای کاتالوگ
+      security: []
+      responses: {'200': {$ref: '#/components/responses/Success'}}
+  /content/pages/{slug}:
+    get:
+      tags: [Phase 1 / Home]
+      summary: صفحه محتوای عمومی
+      security: []
+      parameters: [{name: slug, in: path, required: true, schema: {type: string}}]
+      responses:
+        '200': {$ref: '#/components/responses/Success'}
+        '404': {$ref: '#/components/responses/Error'}
   /search/suggestions:
     get:
-      tags: [Home]
+      tags: [Phase 1 / Search]
       summary: پیشنهاد زنده محصول و مجموعه
       security: []
       parameters:
@@ -102,9 +201,19 @@ paths:
         - {$ref: '#/components/parameters/Limit'}
       responses:
         '200': {$ref: '#/components/responses/Success'}
+  /search:
+    get:
+      tags: [Phase 1 / Search]
+      summary: نتایج کامل جست‌وجو
+      security: []
+      parameters:
+        - {name: q, in: query, required: true, schema: {type: string, minLength: 2}}
+        - {$ref: '#/components/parameters/Page'}
+        - {$ref: '#/components/parameters/PageSize'}
+      responses: {'200': {$ref: '#/components/responses/ProductCollectionSuccess'}}
   /skus/{skuId}/pricing:
     get:
-      tags: [Home]
+      tags: [Phase 1 / Pricing]
       summary: قیمت پلکانی SKU انتخاب‌شده
       security: []
       parameters:
@@ -114,7 +223,7 @@ paths:
         '404': {$ref: '#/components/responses/Error'}
   /pricing/quote-line:
     post:
-      tags: [Home]
+      tags: [Phase 1 / Pricing]
       summary: محاسبه قیمت یک SKU برای تعداد مشخص
       security: []
       requestBody:
@@ -125,16 +234,42 @@ paths:
       responses:
         '200': {$ref: '#/components/responses/Success'}
         '409': {$ref: '#/components/responses/Error'}
+  /availability/check:
+    post:
+      tags: [Phase 1 / Pricing]
+      summary: کنترل هم‌زمان دسترس‌پذیری حداکثر ۵۰ SKU
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [items]
+              properties:
+                items:
+                  type: array
+                  minItems: 1
+                  maxItems: 50
+                  items:
+                    type: object
+                    required: [skuId]
+                    properties:
+                      skuId: {type: string}
+                      quantity: {type: integer, minimum: 1}
+      responses:
+        '200': {$ref: '#/components/responses/Success'}
+        '422': {$ref: '#/components/responses/Error'}
   /carts:
     post:
-      tags: [Home]
+      tags: [Phase 2 / Cart]
       summary: ساخت سبد مهمان
       security: []
       responses:
         '201': {$ref: '#/components/responses/Success'}
   /cart:
     get:
-      tags: [Home]
+      tags: [Phase 2 / Cart]
       summary: دریافت سبد جاری و شمارنده هدر
       security: []
       parameters:
@@ -144,7 +279,7 @@ paths:
         '404': {$ref: '#/components/responses/Error'}
   /cart/items:
     post:
-      tags: [Home]
+      tags: [Phase 2 / Cart]
       summary: افزودن SKU از کارت محصول به سبد
       security: []
       parameters:
@@ -160,7 +295,7 @@ paths:
         '409': {$ref: '#/components/responses/Error'}
   /cart/validate:
     post:
-      tags: [Home]
+      tags: [Phase 2 / Cart]
       summary: قیمت‌گذاری مجدد و اعتبارسنجی سبد جاری
       security: []
       parameters:
@@ -168,12 +303,140 @@ paths:
       responses:
         '200': {$ref: '#/components/responses/Success'}
         '404': {$ref: '#/components/responses/Error'}
-  /checkout/quote: {post: {requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}}}}
-  /orders: {get: {responses: {'200': {$ref: '#/components/responses/Success'}}}, post: {parameters: [{$ref: '#/components/parameters/IdempotencyKey'}], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'201': {$ref: '#/components/responses/Success'}}}}
-  /payments/attempts: {post: {parameters: [{$ref: '#/components/parameters/IdempotencyKey'}], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'201': {$ref: '#/components/responses/Success'}}}}
+  /checkout/quote: {post: {tags: [Phase 3 / Orders], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}}}}
+  /orders: {get: {tags: [Phase 3 / Orders], responses: {'200': {$ref: '#/components/responses/Success'}}}, post: {tags: [Phase 3 / Orders], parameters: [{$ref: '#/components/parameters/IdempotencyKey'}], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'201': {$ref: '#/components/responses/Success'}}}}
+  /payments/attempts: {post: {tags: [Phase 3 / Payment], parameters: [{$ref: '#/components/parameters/IdempotencyKey'}], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'201': {$ref: '#/components/responses/Success'}}}}
+  /me:
+    get: {tags: [Phase 2 / Account], responses: {'200': {$ref: '#/components/responses/Success'}}}
+    patch: {tags: [Phase 2 / Account], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}}}
+    delete: {tags: [Phase 2 / Account], responses: {'204': {$ref: '#/components/responses/Success'}}}
+  /me/addresses:
+    get: {tags: [Phase 2 / Addresses], responses: {'200': {$ref: '#/components/responses/Success'}}}
+    post: {tags: [Phase 2 / Addresses], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'201': {$ref: '#/components/responses/Success'}}}
+  /auth/logout: {post: {tags: [Phase 2 / Auth], responses: {'204': {$ref: '#/components/responses/Success'}}}}
+  /auth/logout-all: {post: {tags: [Phase 2 / Auth], responses: {'204': {$ref: '#/components/responses/Success'}}}}
+  /auth/sessions:
+    get: {tags: [Phase 2 / Auth], responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /auth/sessions/{sessionId}:
+    delete: {tags: [Phase 2 / Auth], parameters: [{name: sessionId, in: path, required: true, schema: {type: string}}], responses: {'204': {$ref: '#/components/responses/Success'}}}
+  /me/business-profile:
+    get: {tags: [Phase 2 / Account], responses: {'200': {$ref: '#/components/responses/Success'}}}
+    put: {tags: [Phase 2 / Account], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /me/addresses/{addressId}:
+    patch: {tags: [Phase 2 / Addresses], parameters: [{name: addressId, in: path, required: true, schema: {type: string}}], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}}}
+    delete: {tags: [Phase 2 / Addresses], parameters: [{name: addressId, in: path, required: true, schema: {type: string}}], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'204': {$ref: '#/components/responses/Success'}}}
+  /me/addresses/{addressId}/default:
+    post: {tags: [Phase 2 / Addresses], parameters: [{name: addressId, in: path, required: true, schema: {type: string}}], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /cart/items/{itemId}:
+    patch: {tags: [Phase 2 / Cart], parameters: [{name: itemId, in: path, required: true, schema: {type: string}}], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}}}
+    delete: {tags: [Phase 2 / Cart], parameters: [{name: itemId, in: path, required: true, schema: {type: string}}], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /cart/merge: {post: {tags: [Phase 2 / Cart], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}}}}
+  /cart/coupon:
+    post: {tags: [Phase 2 / Coupon], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}}}
+    delete: {tags: [Phase 2 / Coupon], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /payments/attempts/{attemptId}:
+    get: {tags: [Phase 3 / Payment], parameters: [{name: attemptId, in: path, required: true, schema: {type: string}}], responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /payments/attempts/{attemptId}/verify:
+    post: {tags: [Phase 3 / Payment], parameters: [{name: attemptId, in: path, required: true, schema: {type: string}}], responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /orders/{orderId}:
+    get: {tags: [Phase 3 / Orders], parameters: [{name: orderId, in: path, required: true, schema: {type: string}}], responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /orders/{orderId}/payment:
+    get: {tags: [Phase 3 / Payment], parameters: [{name: orderId, in: path, required: true, schema: {type: string}}], responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /orders/{orderId}/timeline:
+    get: {tags: [Phase 3 / Orders], parameters: [{name: orderId, in: path, required: true, schema: {type: string}}], responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /orders/{orderId}/invoice:
+    get: {tags: [Phase 3 / Orders], parameters: [{name: orderId, in: path, required: true, schema: {type: string}}], responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /orders/{orderId}/shipments:
+    get: {tags: [Phase 3 / Orders], parameters: [{name: orderId, in: path, required: true, schema: {type: string}}], responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /orders/{orderId}/cancel:
+    post: {tags: [Phase 3 / Orders], parameters: [{name: orderId, in: path, required: true, schema: {type: string}}], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /shipments/{shipmentId}/tracking:
+    get: {tags: [Phase 3 / Orders], parameters: [{name: shipmentId, in: path, required: true, schema: {type: string}}], responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /payments/callback/{provider}:
+    get: {tags: [Phase 3 / Payment], security: [], parameters: [{name: provider, in: path, required: true, schema: {type: string}}], responses: {'200': {$ref: '#/components/responses/Success'}}}
+    post: {tags: [Phase 3 / Payment], security: [], parameters: [{name: provider, in: path, required: true, schema: {type: string}}], responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /webhooks/payments/{provider}:
+    post: {tags: [Phase 3 / Payment], security: [], parameters: [{name: provider, in: path, required: true, schema: {type: string}}], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}, '401': {$ref: '#/components/responses/Error'}}}
+  /support/categories:
+    get: {tags: [Phase 4 / Support], security: [], responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /support/tickets:
+    get: {tags: [Phase 4 / Support], responses: {'200': {$ref: '#/components/responses/Success'}}}
+    post: {tags: [Phase 4 / Support, Phase 5 / Hardening], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'201': {$ref: '#/components/responses/Success'}, '429': {$ref: '#/components/responses/Error'}}}
+  /support/tickets/{ticketId}:
+    get: {tags: [Phase 4 / Support], parameters: [{name: ticketId, in: path, required: true, schema: {type: string}}], responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /support/tickets/{ticketId}/messages:
+    post: {tags: [Phase 4 / Support], parameters: [{name: ticketId, in: path, required: true, schema: {type: string}}], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'201': {$ref: '#/components/responses/Success'}}}
+  /support/tickets/{ticketId}/close:
+    post: {tags: [Phase 4 / Support], parameters: [{name: ticketId, in: path, required: true, schema: {type: string}}], responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /support/uploads:
+    post: {tags: [Phase 4 / Support], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'201': {$ref: '#/components/responses/Success'}, '422': {$ref: '#/components/responses/Error'}}}
+  /admin/orders:
+    get: {tags: [Phase 4 / Admin Operations], responses: {'200': {$ref: '#/components/responses/Success'}, '403': {$ref: '#/components/responses/Error'}}}
+  /admin/orders/{orderId}/transitions:
+    post: {tags: [Phase 4 / Admin Operations], parameters: [{name: orderId, in: path, required: true, schema: {type: string}}], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /admin/orders/{orderId}/notes:
+    post: {tags: [Phase 4 / Admin Operations], parameters: [{name: orderId, in: path, required: true, schema: {type: string}}], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'201': {$ref: '#/components/responses/Success'}}}
+  /admin/orders/{orderId}/shipments:
+    post: {tags: [Phase 4 / Admin Operations], parameters: [{name: orderId, in: path, required: true, schema: {type: string}}], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'201': {$ref: '#/components/responses/Success'}}}
+  /admin/shipments/{shipmentId}/dispatch:
+    post: {tags: [Phase 4 / Admin Operations], parameters: [{name: shipmentId, in: path, required: true, schema: {type: string}}], responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /admin/customers:
+    get: {tags: [Phase 4 / Admin Operations], responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /admin/payments:
+    get: {tags: [Phase 4 / Admin Operations], responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /admin/reports/sales-summary:
+    get: {tags: [Phase 4 / Reports], responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /admin/reports/inventory-risk:
+    get: {tags: [Phase 4 / Reports], responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /admin/reports/exports:
+    post: {tags: [Phase 4 / Reports], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'201': {$ref: '#/components/responses/Success'}}}
+  /admin/reports/exports/{jobId}:
+    get: {tags: [Phase 4 / Reports], parameters: [{name: jobId, in: path, required: true, schema: {type: string}}], responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /admin/tickets:
+    get: {tags: [Phase 4 / Admin Operations], responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /admin/tickets/{ticketId}:
+    get: {tags: [Phase 4 / Admin Operations], parameters: [{name: ticketId, in: path, required: true, schema: {type: string}}], responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /admin/tickets/{ticketId}/messages:
+    post: {tags: [Phase 4 / Admin Operations], parameters: [{name: ticketId, in: path, required: true, schema: {type: string}}], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'201': {$ref: '#/components/responses/Success'}}}
+  /admin/tickets/{ticketId}/assign:
+    post: {tags: [Phase 4 / Admin Operations], parameters: [{name: ticketId, in: path, required: true, schema: {type: string}}], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /admin/tickets/{ticketId}/status:
+    post: {tags: [Phase 4 / Admin Operations], parameters: [{name: ticketId, in: path, required: true, schema: {type: string}}], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /admin/products:
+    get: {tags: [Phase 4 / Catalog Admin], responses: {'200': {$ref: '#/components/responses/Success'}}}
+    post: {tags: [Phase 4 / Catalog Admin], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'201': {$ref: '#/components/responses/Success'}}}
+  /admin/products/{productId}:
+    patch: {tags: [Phase 4 / Catalog Admin], parameters: [{name: productId, in: path, required: true, schema: {type: string}}], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /admin/products/{productId}/publish:
+    post: {tags: [Phase 4 / Catalog Admin], parameters: [{name: productId, in: path, required: true, schema: {type: string}}], responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /admin/products/{productId}/archive:
+    post: {tags: [Phase 4 / Catalog Admin], parameters: [{name: productId, in: path, required: true, schema: {type: string}}], responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /admin/skus/{skuId}/pricing-tiers:
+    get: {tags: [Phase 4 / Catalog Admin], parameters: [{name: skuId, in: path, required: true, schema: {type: string}}], responses: {'200': {$ref: '#/components/responses/Success'}}}
+    put: {tags: [Phase 4 / Catalog Admin], parameters: [{name: skuId, in: path, required: true, schema: {type: string}}], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /admin/inventory/adjustments:
+    post: {tags: [Phase 4 / Catalog Admin], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'201': {$ref: '#/components/responses/Success'}}}
+  /admin/coupons:
+    get: {tags: [Phase 4 / Configuration], responses: {'200': {$ref: '#/components/responses/Success'}}}
+    post: {tags: [Phase 4 / Configuration], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'201': {$ref: '#/components/responses/Success'}}}
+  /admin/coupons/{couponId}:
+    patch: {tags: [Phase 4 / Configuration], parameters: [{name: couponId, in: path, required: true, schema: {type: string}}], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /admin/settings/{setting}:
+    get: {tags: [Phase 4 / Configuration], parameters: [{name: setting, in: path, required: true, schema: {type: string}}], responses: {'200': {$ref: '#/components/responses/Success'}}}
+    put: {tags: [Phase 4 / Configuration], parameters: [{name: setting, in: path, required: true, schema: {type: string}}], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}}}
 components:
   securitySchemes: {bearerAuth: {type: http, scheme: bearer, bearerFormat: JWT}}
+  headers:
+    RequestId:
+      description: شناسه Trace نهایی درخواست
+      schema: {type: string}
   parameters:
+    RequestId:
+      name: X-Request-Id
+      in: header
+      required: false
+      description: شناسه Trace کلاینت؛ در صورت نامعتبر بودن سرور شناسه جدید می‌سازد.
+      schema: {type: string, minLength: 8, maxLength: 100, pattern: '^[A-Za-z0-9._:-]+$'}
     Page: {name: page, in: query, schema: {type: integer, minimum: 1}}
     PageSize: {name: pageSize, in: query, schema: {type: integer, minimum: 1, maximum: 60}}
     Limit: {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 60}}
@@ -239,6 +502,29 @@ components:
         fastDispatch: {type: array, items: {$ref: '#/components/schemas/ProductSummary'}}
         wholesaleSteps: {type: array, items: {type: object}}
         contact: {type: object}
+    HealthLive:
+      type: object
+      required: [status]
+      properties:
+        status: {type: string, const: ok}
+    HealthReady:
+      type: object
+      required: [status, database]
+      properties:
+        status: {type: string, const: ready}
+        database: {type: string, const: ok}
+    Bootstrap:
+      type: object
+      required: [currency, locale, features]
+      properties:
+        currency: {type: string, const: TOMAN}
+        locale: {type: string, const: fa-IR}
+        features:
+          type: object
+          required: [guestCart, onlinePayment]
+          properties:
+            guestCart: {type: boolean}
+            onlinePayment: {type: boolean}
   responses:
     Success: {description: Success, content: {application/json: {schema: {$ref: '#/components/schemas/Success'}}}}
     Error: {description: Error, content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}}
@@ -258,3 +544,30 @@ components:
             allOf:
               - {$ref: '#/components/schemas/Success'}
               - {type: object, properties: {data: {$ref: '#/components/schemas/Home'}}}
+    HealthLiveSuccess:
+      description: پردازش API زنده است.
+      headers: {X-Request-Id: {$ref: '#/components/headers/RequestId'}}
+      content:
+        application/json:
+          schema:
+            allOf:
+              - {$ref: '#/components/schemas/Success'}
+              - {type: object, properties: {data: {$ref: '#/components/schemas/HealthLive'}}}
+    HealthReadySuccess:
+      description: API و دیتابیس آماده پاسخ‌گویی هستند.
+      headers: {X-Request-Id: {$ref: '#/components/headers/RequestId'}}
+      content:
+        application/json:
+          schema:
+            allOf:
+              - {$ref: '#/components/schemas/Success'}
+              - {type: object, properties: {data: {$ref: '#/components/schemas/HealthReady'}}}
+    BootstrapSuccess:
+      description: تنظیمات عمومی لازم برای شروع کلاینت
+      headers: {X-Request-Id: {$ref: '#/components/headers/RequestId'}}
+      content:
+        application/json:
+          schema:
+            allOf:
+              - {$ref: '#/components/schemas/Success'}
+              - {type: object, properties: {data: {$ref: '#/components/schemas/Bootstrap'}}}

@@ -13,6 +13,7 @@ use App\Shared\Exceptions\ForbiddenException;
 use App\Shared\Exceptions\BadRequestException;
 use App\Shared\Exceptions\ApiException;
 use App\Shared\Http\ApiResponse;
+use App\Shared\Logging\StructuredLogger;
 use Throwable;
 
 /**
@@ -22,9 +23,9 @@ class ExceptionHandler
 {
     private bool $debug;
 
-    public function __construct()
+    public function __construct(?bool $debug = null)
     {
-        $this->debug = ($_ENV['APP_DEBUG'] ?? '0') === '1';
+        $this->debug = $debug ?? (($_ENV['APP_DEBUG'] ?? '0') === '1');
     }
 
     public function handle(Throwable $e): array
@@ -34,7 +35,7 @@ class ExceptionHandler
         return match (true) {
             $e instanceof ApiException            => ApiResponse::error($e->getMessage(), $e->getStatusCode(), $e->details, $e->fields, $e->errorCode),
             $e instanceof ValidationException     => ApiResponse::validationError($e->getErrors(), $e->getMessage()),
-            $e instanceof AuthenticationException => ApiResponse::unauthorized($e->getMessage()),
+            $e instanceof AuthenticationException => ApiResponse::error($e->getMessage(), 401, code: 'AUTHENTICATION_REQUIRED'),
             $e instanceof AccessDeniedException,
             $e instanceof ForbiddenException      => ApiResponse::forbidden($e->getMessage()),
             $e instanceof NotFoundException       => ApiResponse::notFound($e->getMessage()),
@@ -67,9 +68,13 @@ class ExceptionHandler
 
     private function log(Throwable $e): void
     {
-        error_log(sprintf(
-            '[Exception] %s: %s in %s:%d',
-            get_class($e), $e->getMessage(), $e->getFile(), $e->getLine()
-        ));
+        StructuredLogger::error('http.exception', [
+            'exceptionClass' => get_class($e),
+            'status' => $e instanceof HttpException ? $e->getStatusCode() : 500,
+            'errorCode' => $e instanceof ApiException ? $e->errorCode : null,
+            'message' => $this->debug ? $e->getMessage() : null,
+            'file' => $this->debug ? $e->getFile() : null,
+            'line' => $this->debug ? $e->getLine() : null,
+        ]);
     }
 }
