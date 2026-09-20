@@ -23,6 +23,7 @@ final class CatalogController extends Controller
     public function seriesDetail(string $seriesSlug,array $request): array { return $this->cached($this->ok($this->catalog->seriesDetail($seriesSlug,$request)),60); }
     public function featuredSeries(array $request): array { return $this->cached($this->ok($this->catalog->featuredSeries((int)($request['limit']??8))),120); }
     public function bestSelling(array $request): array { return $this->cached($this->ok($this->catalog->bestSelling((int)($request['limit']??12))),60); }
+    public function searchBestSelling(array $request): array { return $this->cached($this->ok($this->catalog->searchBestSelling((string)($request['q']??''),(int)($request['limit']??12))),30); }
     public function fastDispatch(array $request): array { return $this->cached($this->ok($this->catalog->fastDispatch((int)($request['limit']??12))),30); }
     public function searchSuggestions(array $request): array { return $this->cached($this->ok($this->catalog->searchSuggestions((string)($request['q']??''),(int)($request['limit']??10))),15); }
     public function publishers(): array { return $this->cached($this->ok($this->catalog->taxonomy('publishers')),300); }

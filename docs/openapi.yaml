@@ -2,6 +2,8 @@ openapi: 3.1.0
 info: {title: Pardis Book API, version: 0.1.0}
 servers: [{url: /api/v1}]
 tags:
+  - name: product
+    description: پرفروش‌های دستی؛ نمایش و جست‌وجوی عمومی و مدیریت توسط ادمین
   - name: Phase 0 / Platform
     description: سلامت سرویس، آمادگی وابستگی‌ها و قرارداد اولیه کلاینت
   - name: Home
@@ -101,12 +103,31 @@ paths:
         '200': {$ref: '#/components/responses/ProductCollectionSuccess'}
   /products/best-selling:
     get:
-      tags: [Phase 1 / Home]
-      summary: محصولات پرفروش بر اساس سفارش‌های پرداخت‌شده
+      tags: [product]
+      operationId: listBestSellingProducts
+      summary: فهرست عمومی کتاب‌های پرفروش منتخب
+      description: فقط آیتم‌های فعال را طبق ترتیب تعیین‌شده در پنل ادمین برمی‌گرداند.
       security: []
       parameters: [{$ref: '#/components/parameters/Limit'}]
       responses:
-        '200': {$ref: '#/components/responses/ProductCollectionSuccess'}
+        '200': {$ref: '#/components/responses/BestSellingCollectionSuccess'}
+  /products/best-selling/search:
+    get:
+      tags: [product]
+      operationId: searchBestSellingProducts
+      summary: جست‌وجوی عمومی کتاب‌های پرفروش
+      description: جست‌وجو فقط میان آیتم‌های فعال و بر اساس نام کتاب انجام می‌شود.
+      security: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: بخشی از نام کتاب
+          schema: {type: string, minLength: 2, example: فمیلی}
+        - {$ref: '#/components/parameters/Limit'}
+      responses:
+        '200': {$ref: '#/components/responses/BestSellingCollectionSuccess'}
+        '422': {$ref: '#/components/responses/Error'}
   /products/fast-dispatch:
     get:
       tags: [Phase 1 / Home]
@@ -411,6 +432,68 @@ paths:
     post: {tags: [Phase 4 / Catalog Admin], parameters: [{name: productId, in: path, required: true, schema: {type: string}}], responses: {'200': {$ref: '#/components/responses/Success'}}}
   /admin/products/{productId}/archive:
     post: {tags: [Phase 4 / Catalog Admin], parameters: [{name: productId, in: path, required: true, schema: {type: string}}], responses: {'200': {$ref: '#/components/responses/Success'}}}
+  /admin/best-selling-products:
+    get:
+      tags: [product]
+      operationId: adminListBestSellingProducts
+      summary: فهرست مدیریتی کتاب‌های پرفروش
+      description: آیتم‌های فعال و غیرفعال را برمی‌گرداند و با نام کتاب قابل فیلتر است. نیازمند مجوز catalog.read است.
+      parameters:
+        - name: q
+          in: query
+          required: false
+          description: فیلتر اختیاری بر اساس نام کتاب
+          schema: {type: string, example: فمیلی}
+      responses:
+        '200': {$ref: '#/components/responses/AdminBestSellingCollectionSuccess'}
+        '401': {$ref: '#/components/responses/Error'}
+        '403': {$ref: '#/components/responses/Error'}
+    post:
+      tags: [product]
+      operationId: adminCreateBestSellingProduct
+      summary: افزودن کتاب به پرفروش‌های منتخب
+      description: نیازمند مجوز catalog.write است. قیمت‌ها برحسب تومان هستند.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/BestSellingProductCreateRequest'}
+      responses:
+        '201': {$ref: '#/components/responses/AdminBestSellingItemSuccess'}
+        '401': {$ref: '#/components/responses/Error'}
+        '403': {$ref: '#/components/responses/Error'}
+        '422': {$ref: '#/components/responses/Error'}
+  /admin/best-selling-products/{itemId}:
+    patch:
+      tags: [product]
+      operationId: adminUpdateBestSellingProduct
+      summary: ویرایش کتاب پرفروش منتخب
+      description: نیازمند مجوز catalog.write است. فقط فیلدهای ارسال‌شده تغییر می‌کنند.
+      parameters:
+        - {$ref: '#/components/parameters/BestSellingItemId'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/BestSellingProductUpdateRequest'}
+      responses:
+        '200': {$ref: '#/components/responses/AdminBestSellingItemSuccess'}
+        '401': {$ref: '#/components/responses/Error'}
+        '403': {$ref: '#/components/responses/Error'}
+        '404': {$ref: '#/components/responses/Error'}
+        '422': {$ref: '#/components/responses/Error'}
+    delete:
+      tags: [product]
+      operationId: adminDeleteBestSellingProduct
+      summary: حذف کتاب از پرفروش‌های منتخب
+      description: نیازمند مجوز catalog.write است.
+      parameters:
+        - {$ref: '#/components/parameters/BestSellingItemId'}
+      responses:
+        '204': {description: کتاب از فهرست پرفروش‌ها حذف شد.}
+        '401': {$ref: '#/components/responses/Error'}
+        '403': {$ref: '#/components/responses/Error'}
+        '404': {$ref: '#/components/responses/Error'}
   /admin/skus/{skuId}/pricing-tiers:
     get: {tags: [Phase 4 / Catalog Admin], parameters: [{name: skuId, in: path, required: true, schema: {type: string}}], responses: {'200': {$ref: '#/components/responses/Success'}}}
     put: {tags: [Phase 4 / Catalog Admin], parameters: [{name: skuId, in: path, required: true, schema: {type: string}}], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}}}
@@ -440,6 +523,12 @@ components:
     Page: {name: page, in: query, schema: {type: integer, minimum: 1}}
     PageSize: {name: pageSize, in: query, schema: {type: integer, minimum: 1, maximum: 60}}
     Limit: {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 60}}
+    BestSellingItemId:
+      name: itemId
+      in: path
+      required: true
+      description: شناسه آیتم پرفروش
+      schema: {type: string, pattern: '^bsp_[a-z0-9]+$', example: bsp_01k5example}
     GuestCartToken:
       name: X-Guest-Cart-Token
       in: header
@@ -491,6 +580,57 @@ components:
             availableQuantity: {type: integer}
             availability: {type: string}
             fastDispatch: {type: boolean}
+    BestSellingProduct:
+      type: object
+      required: [id, title, coverUrl, coverAlt, price, discountedPrice, discountPercent, remainingPercent]
+      properties:
+        id: {type: string, example: bsp_01k5example}
+        title: {type: string, maxLength: 250, example: Family and Friends 3}
+        coverUrl: {type: string, example: 'https://cdn.example.com/books/family-3.jpg'}
+        coverAlt: {type: [string, 'null'], maxLength: 250, example: جلد کتاب Family and Friends 3}
+        price: {type: integer, minimum: 1, example: 250000, description: قیمت اصلی برحسب تومان}
+        discountedPrice: {type: integer, minimum: 0, example: 200000, description: قیمت پس از تخفیف برحسب تومان؛ نباید از قیمت اصلی بیشتر باشد.}
+        discountPercent: {type: integer, minimum: 0, maximum: 100, example: 20}
+        remainingPercent: {type: integer, minimum: 0, maximum: 100, example: 35}
+    AdminBestSellingProduct:
+      unevaluatedProperties: false
+      allOf:
+        - {$ref: '#/components/schemas/BestSellingProduct'}
+        - type: object
+          required: [sortOrder, active]
+          properties:
+            sortOrder: {type: integer, minimum: 0, maximum: 100000, example: 1}
+            active: {type: boolean, example: true}
+            createdAt: {type: string, format: date-time}
+            updatedAt: {type: string, format: date-time}
+    BestSellingProductCreateRequest:
+      type: object
+      additionalProperties: false
+      required: [title, coverUrl, price, discountedPrice, discountPercent, remainingPercent]
+      properties:
+        title: {type: string, minLength: 1, maxLength: 250, example: Family and Friends 3}
+        coverUrl: {type: string, minLength: 1, example: 'https://cdn.example.com/books/family-3.jpg'}
+        coverAlt: {type: [string, 'null'], maxLength: 250, example: جلد کتاب Family and Friends 3}
+        price: {type: integer, minimum: 1, example: 250000}
+        discountedPrice: {type: integer, minimum: 0, example: 200000}
+        discountPercent: {type: integer, minimum: 0, maximum: 100, example: 20}
+        remainingPercent: {type: integer, minimum: 0, maximum: 100, example: 35}
+        sortOrder: {type: integer, minimum: 0, maximum: 100000, default: 0, example: 1}
+        active: {type: boolean, default: true, example: true}
+    BestSellingProductUpdateRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        title: {type: string, minLength: 1, maxLength: 250}
+        coverUrl: {type: string, minLength: 1}
+        coverAlt: {type: [string, 'null'], maxLength: 250}
+        price: {type: integer, minimum: 1}
+        discountedPrice: {type: integer, minimum: 0}
+        discountPercent: {type: integer, minimum: 0, maximum: 100}
+        remainingPercent: {type: integer, minimum: 0, maximum: 100}
+        sortOrder: {type: integer, minimum: 0, maximum: 100000}
+        active: {type: boolean}
     Home:
       type: object
       required: [hero, benefits, featuredSeries, bestSelling, fastDispatch, wholesaleSteps, contact]
@@ -498,7 +638,7 @@ components:
         hero: {type: object}
         benefits: {type: array, items: {type: object}}
         featuredSeries: {type: array, items: {type: object}}
-        bestSelling: {type: array, items: {$ref: '#/components/schemas/ProductSummary'}}
+        bestSelling: {type: array, items: {$ref: '#/components/schemas/BestSellingProduct'}}
         fastDispatch: {type: array, items: {$ref: '#/components/schemas/ProductSummary'}}
         wholesaleSteps: {type: array, items: {type: object}}
         contact: {type: object}
@@ -536,6 +676,30 @@ components:
             allOf:
               - {$ref: '#/components/schemas/Success'}
               - {type: object, properties: {data: {type: array, items: {$ref: '#/components/schemas/ProductSummary'}}}}
+    BestSellingCollectionSuccess:
+      description: فهرست عمومی کتاب‌های پرفروش
+      content:
+        application/json:
+          schema:
+            allOf:
+              - {$ref: '#/components/schemas/Success'}
+              - {type: object, properties: {data: {type: array, items: {$ref: '#/components/schemas/BestSellingProduct'}}}}
+    AdminBestSellingCollectionSuccess:
+      description: فهرست مدیریتی کتاب‌های پرفروش
+      content:
+        application/json:
+          schema:
+            allOf:
+              - {$ref: '#/components/schemas/Success'}
+              - {type: object, properties: {data: {type: array, items: {$ref: '#/components/schemas/AdminBestSellingProduct'}}}}
+    AdminBestSellingItemSuccess:
+      description: اطلاعات آیتم پرفروش ایجاد یا ویرایش‌شده
+      content:
+        application/json:
+          schema:
+            allOf:
+              - {$ref: '#/components/schemas/Success'}
+              - {type: object, properties: {data: {$ref: '#/components/schemas/AdminBestSellingProduct'}}}
     HomeSuccess:
       description: Home aggregate
       content:

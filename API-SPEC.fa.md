@@ -212,7 +212,8 @@ Response شامل Access/Refresh Token، User، `isNewUser`, `profileCompleted` 
 | `GET` | `/navigation` | عمومی | منوی دسته‌ها |
 | `GET` | `/home` | عمومی | Aggregate صفحه اصلی |
 | `GET` | `/series/featured` | عمومی | مجموعه‌های منتخب |
-| `GET` | `/products/best-selling` | عمومی | پرفروش‌ها |
+| `GET` | `/products/best-selling?limit=12` | عمومی | پرفروش‌های انتخاب‌شده در پنل ادمین |
+| `GET` | `/products/best-selling/search?q=&limit=12` | عمومی | جست‌وجوی پرفروش‌های فعال بر اساس نام کتاب |
 | `GET` | `/products/fast-dispatch` | عمومی | آماده ارسال سریع |
 | `GET` | `/content/pages/{slug}` | عمومی | قوانین، درباره و راهنما |
 | `GET` | `/health/live` | داخلی | Liveness |
@@ -749,11 +750,36 @@ RBAC سمت Backend اجباری است؛ مخفی‌کردن دکمه در Fron
 | `POST` | `/admin/media/presign` | Upload جلد |
 | `POST` | `/admin/catalog/import` | Import CSV |
 | `GET` | `/admin/catalog/import/{jobId}` | نتیجه Import |
+| `GET/POST` | `/admin/best-selling-products` | فهرست/افزودن پرفروش‌های دستی |
+| `PATCH/DELETE` | `/admin/best-selling-products/{id}` | ویرایش/حذف پرفروش دستی |
 
 - Draft و Published جدا باشند.
 - Slug یکتا باشد.
 - Product دارای سفارش فقط Archive می‌شود، نه حذف فیزیکی.
 - تغییر ISBN یا SKU Code حساس و Audit شود.
+
+### پرفروش‌های دستی
+
+بدنه ساخت/ویرایش شامل `title`، `coverUrl`، `coverAlt` (اختیاری)، `price`،
+`discountedPrice`، `discountPercent`، `remainingPercent`، `sortOrder` و `active` است.
+قیمت‌ها عدد صحیح برحسب تومان و درصدها بین ۰ تا ۱۰۰ هستند. API عمومی فقط آیتم‌های
+فعال را طبق `sortOrder` برمی‌گرداند. نمونه پاسخ عمومی:
+
+```json
+{
+  "id": "bsp_...",
+  "title": "نام کتاب",
+  "coverUrl": "https://cdn.example.com/book.jpg",
+  "coverAlt": "جلد نام کتاب",
+  "price": 250000,
+  "discountedPrice": 200000,
+  "discountPercent": 20,
+  "remainingPercent": 35
+}
+```
+
+برای جست‌وجو، پارامتر `q` الزامی و حداقل ۲ کاراکتر است. پنل ادمین نیز می‌تواند
+فهرست مدیریتی را با `GET /admin/best-selling-products?q=نام‌کتاب` فیلتر کند.
 
 ---
 
@@ -1233,4 +1259,3 @@ Indexهای ضروری: `sku.code`, `sku.isbn`, `product.slug`, `series.slug`, `
 ```
 
 اولویت معماری باید حفظ صحت **قیمت، موجودی و پرداخت** باشد. Snapshot سفارش، Idempotency، رزرو موجودی و Verify سمت سرور نباید به رفتار مرورگر وابسته باشند.
-

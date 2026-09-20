@@ -63,7 +63,7 @@ final class CatalogService
         COALESCE(sales.sales_quantity, 0) AS sales_quantity
         SQL;
 
-    public function __construct(private PricingEngine $pricing)
+    public function __construct(private PricingEngine $pricing, private BestSellingService $bestSelling)
     {
     }
 
@@ -206,7 +206,8 @@ final class CatalogService
         ], $rows);
     }
 
-    public function bestSelling(int $limit = 12): array { return $this->summaryCollection("p.status='published' AND sku.id IS NOT NULL", [':limit' => min(60, max(1, $limit))], 'sales_quantity DESC,p.created_at DESC,p.id DESC'); }
+    public function bestSelling(int $limit = 12): array { return $this->bestSelling->publicItems($limit); }
+    public function searchBestSelling(string $query, int $limit = 12): array { return $this->bestSelling->searchPublic($query, $limit); }
     public function fastDispatch(int $limit = 12): array { return $this->summaryCollection("p.status='published' AND sku.fast_dispatch=true AND sku.status IN ('in_stock','limited') AND COALESCE(stock.available_quantity,0)>0", [':limit' => min(60, max(1, $limit))], 'sales_quantity DESC,p.created_at DESC,p.id DESC'); }
 
     public function searchSuggestions(string $query, int $limit = 10): array

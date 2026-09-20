@@ -13,6 +13,7 @@ use App\Http\Controllers\SupportController;
 use App\Http\Controllers\AdminOperationsController;
 use App\Http\Controllers\AdminCatalogController;
 use App\Http\Controllers\AdminConfigurationController;
+use App\Http\Controllers\AdminBestSellingController;
 use App\Http\Controllers\ReportController;
 
 return static function (Router $r): void {
@@ -30,6 +31,7 @@ return static function (Router $r): void {
     $r->delete('v1', '/auth/sessions/{sessionId}', AuthController::class, 'revokeSession', 'auth');
     $r->get('v1', '/products', CatalogController::class, 'products');
     $r->get('v1', '/products/best-selling', CatalogController::class, 'bestSelling');
+    $r->get('v1', '/products/best-selling/search', CatalogController::class, 'searchBestSelling');
     $r->get('v1', '/products/fast-dispatch', CatalogController::class, 'fastDispatch');
     $r->get('v1', '/products/{productSlug}', CatalogController::class, 'product');
     $r->get('v1', '/products/{productSlug}/related', CatalogController::class, 'related');
@@ -110,6 +112,10 @@ return static function (Router $r): void {
     $r->get('v1', '/admin/skus/{skuId}/pricing-tiers', AdminCatalogController::class, 'tiers', ['catalog.read']);
     $r->put('v1', '/admin/skus/{skuId}/pricing-tiers', AdminCatalogController::class, 'saveTiers', ['pricing.write']);
     $r->post('v1', '/admin/inventory/adjustments', AdminCatalogController::class, 'adjust', ['inventory.adjust']);
+    $r->get('v1', '/admin/best-selling-products', AdminBestSellingController::class, 'index', ['catalog.read']);
+    $r->post('v1', '/admin/best-selling-products', AdminBestSellingController::class, 'create', ['catalog.write']);
+    $r->patch('v1', '/admin/best-selling-products/{itemId}', AdminBestSellingController::class, 'update', ['catalog.write']);
+    $r->delete('v1', '/admin/best-selling-products/{itemId}', AdminBestSellingController::class, 'delete', ['catalog.write']);
     $r->get('v1', '/admin/coupons', AdminConfigurationController::class, 'coupons', ['catalog.write']);
     $r->post('v1', '/admin/coupons', AdminConfigurationController::class, 'createCoupon', ['catalog.write']);
     $r->patch('v1', '/admin/coupons/{couponId}', AdminConfigurationController::class, 'updateCoupon', ['catalog.write']);
