@@ -159,6 +159,7 @@ Admin:      /api/v1/admin
 |---|---|---|---|
 | `POST` | `/auth/otp/request` | عمومی | درخواست OTP |
 | `POST` | `/auth/otp/verify` | عمومی | تأیید و ورود/ثبت‌نام |
+| `POST` | `/auth/admin/login` | عمومی | ورود کارکنان پنل با نام کاربری و رمز عبور |
 | `POST` | `/auth/token/refresh` | Refresh Token | تمدید نشست |
 | `POST` | `/auth/logout` | کاربر | خروج نشست جاری |
 | `POST` | `/auth/logout-all` | کاربر | خروج همه نشست‌ها |
@@ -201,6 +202,19 @@ Admin:      /api/v1/admin
 ```
 
 Response شامل Access/Refresh Token، User، `isNewUser`, `profileCompleted` و نتیجه `cartMerge` است. ادغام سبد Server-side انجام می‌شود؛ Quantity تکراری جمع و سپس حداقل، موجودی و قیمت دوباره محاسبه می‌شوند.
+
+### ورود پنل مدیریت
+
+```json
+{
+  "username": "admin",
+  "password": "a-strong-password"
+}
+```
+
+این مسیر فقط برای کاربری که حداقل یک نقش غیرمشتری دارد نشست صادر می‌کند. پیام خطای نام
+کاربری ناموجود و رمز اشتباه یکسان است. نشست پنل به‌صورت پیش‌فرض ۳۰ روز اعتبار دارد؛
+Access Token کوتاه‌عمر است و با Refresh Token چرخشی تمدید می‌شود.
 
 ---
 

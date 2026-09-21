@@ -12,6 +12,8 @@ use PDO;
 
 final class AuthService
 {
+    private const ADMIN_SESSION_TTL = 2592000;
+
     public function __construct(private CartService $carts)
     {
     }
@@ -43,6 +45,71 @@ final class AuthService
             $result['developmentCode'] = $code;
         }
         return $result;
+    }
+
+    public function adminLogin(string $username, string $password): array
+    {
+        $username = mb_strtolower(trim($username));
+        if (preg_match('/^[a-z0-9._-]{3,100}$/', $username) !== 1 || $password === '') {
+            throw new ApiException('INVALID_CREDENTIALS', 'نام کاربری یا رمز عبور صحیح نیست.', 401);
+        }
+
+        return DB::transaction(function (PDO $pdo) use ($username, $password): array {
+            $statement = $pdo->prepare(<<<'SQL'
+                SELECT u.*
+                FROM users u
+                WHERE lower(u.username)=:username
+                  AND u.status='active'
+                  AND EXISTS (
+                    SELECT 1
+                    FROM user_roles ur
+                    JOIN roles r ON r.id=ur.role_id
+                    WHERE ur.user_id=u.id AND r.name<>'customer'
+                  )
+                FOR UPDATE
+                SQL);
+            $statement->execute([':username' => $username]);
+            $user = $statement->fetch();
+
+            // Always perform a password verification to reduce account enumeration signals.
+            $hash = $user && !empty($user['password_hash'])
+                ? (string) $user['password_hash']
+                : '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.';
+            if (!$user || !password_verify($password, $hash)) {
+                throw new ApiException('INVALID_CREDENTIALS', 'نام کاربری یا رمز عبور صحیح نیست.', 401);
+            }
+
+            if (password_needs_rehash($hash, PASSWORD_DEFAULT)) {
+                $pdo->prepare('UPDATE users SET password_hash=:hash WHERE id=:id')
+                    ->execute([':hash' => password_hash($password, PASSWORD_DEFAULT), ':id' => $user['id']]);
+            }
+            $pdo->prepare('UPDATE users SET last_login_at=now() WHERE id=:id')->execute([':id' => $user['id']]);
+
+            $refreshTtl = max(86400, (int) ($_ENV['ADMIN_SESSION_TTL'] ?? self::ADMIN_SESSION_TTL));
+            $refreshToken = bin2hex(random_bytes(32));
+            $sessionId = Id::make('ses');
+            $expiresAt = gmdate('Y-m-d H:i:sP', time() + $refreshTtl);
+            $pdo->prepare('INSERT INTO sessions(public_id,user_id,refresh_hash,expires_at) VALUES(:session,:user,:hash,:expires)')
+                ->execute([
+                    ':session' => $sessionId,
+                    ':user' => $user['id'],
+                    ':hash' => hash('sha256', $refreshToken),
+                    ':expires' => $expiresAt,
+                ]);
+
+            return [
+                'accessToken' => $this->jwt((int) $user['id'], (string) $user['public_id'], $sessionId),
+                'refreshToken' => $refreshToken,
+                'expiresIn' => $this->accessTokenTtl(),
+                'sessionExpiresAt' => gmdate('Y-m-d\TH:i:s\Z', time() + $refreshTtl),
+                'user' => [
+                    'id' => $user['public_id'],
+                    'username' => $user['username'],
+                    'phone' => $user['phone'],
+                    'name' => $user['name'],
+                ],
+            ];
+        });
     }
 
     public function verify(string $challenge, string $code, string $guestCartToken = ''): array

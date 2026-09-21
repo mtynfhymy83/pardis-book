@@ -9,10 +9,14 @@ cp .env.example .env
 # replace JWT_SECRET, then:
 docker compose up -d db redis
 docker compose run --rm app php scripts/migrate.php
+# Set ADMIN_USERNAME and ADMIN_PASSWORD in .env, then create/update the admin:
+docker compose run --rm app php scripts/create-admin.php
 docker compose up -d app worker
 ```
 
 API base: `http://localhost:9502/api/v1`. OpenAPI is in `docs/openapi.yaml`. Fake OTP codes are returned only outside production; fake payment is blocked in production unless explicitly enabled.
+
+The admin panel uses `POST /auth/admin/login` with a username and password. Set a password of at least 12 characters through `ADMIN_PASSWORD`; the setup script stores only its secure hash. Admin sessions remain valid for 30 days by default (`ADMIN_SESSION_TTL=2592000`) while short-lived access tokens are transparently renewed with rotating refresh tokens.
 
 Swagger UI is available at `http://localhost:9502/docs`. Platform endpoints are grouped under `Phase 0 / Platform`. Authenticated requests are checked against the persisted session plus database-backed roles and permissions; access tokens therefore become invalid as soon as their session is revoked.
 

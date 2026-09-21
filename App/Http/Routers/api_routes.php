@@ -24,6 +24,7 @@ return static function (Router $r): void {
     $r->get('v1', '/navigation', SystemController::class, 'navigation');
     $r->post('v1', '/auth/otp/request', AuthController::class, 'requestOtp');
     $r->post('v1', '/auth/otp/verify', AuthController::class, 'verifyOtp');
+    $r->post('v1', '/auth/admin/login', AuthController::class, 'adminLogin');
     $r->post('v1', '/auth/token/refresh', AuthController::class, 'refresh');
     $r->post('v1', '/auth/logout', AuthController::class, 'logout', 'auth');
     $r->post('v1', '/auth/logout-all', AuthController::class, 'logoutAll', 'auth');

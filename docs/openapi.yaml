@@ -17,7 +17,7 @@ tags:
   - name: Phase 1 / Pricing
     description: قیمت پلکانی و کنترل هم‌زمان موجودی
   - name: Phase 2 / Auth
-    description: OTP، نشست‌ها و خروج امن
+    description: OTP مشتریان، ورود نام کاربری/رمز عبور مدیران، نشست‌ها و خروج امن
   - name: Phase 2 / Account
     description: پروفایل و اطلاعات تجاری کاربر
   - name: Phase 2 / Addresses
@@ -88,6 +88,28 @@ paths:
         '200': {$ref: '#/components/responses/Success'}
   /auth/otp/request: {post: {tags: [Phase 2 / Auth, Phase 5 / Hardening], security: [], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}, '429': {$ref: '#/components/responses/Error'}}}}
   /auth/otp/verify: {post: {tags: [Phase 2 / Auth, Phase 5 / Hardening], security: [], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}, '422': {$ref: '#/components/responses/Error'}, '429': {$ref: '#/components/responses/Error'}}}}
+  /auth/admin/login:
+    post:
+      tags: [Phase 2 / Auth, Phase 5 / Hardening]
+      operationId: adminPasswordLogin
+      summary: ورود کارکنان پنل با نام کاربری و رمز عبور
+      description: نشست صادرشده تا ۳۰ روز معتبر است و access token کوتاه‌عمر از طریق refresh token تمدید می‌شود.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [username, password]
+              properties:
+                username: {type: string, minLength: 3, maxLength: 100, pattern: '^[a-z0-9._-]+$', example: admin}
+                password: {type: string, format: password, minLength: 1}
+      responses:
+        '200': {$ref: '#/components/responses/Success'}
+        '401': {$ref: '#/components/responses/Error'}
+        '429': {$ref: '#/components/responses/Error'}
   /auth/token/refresh: {post: {tags: [Phase 2 / Auth], security: [], requestBody: {$ref: '#/components/requestBodies/Json'}, responses: {'200': {$ref: '#/components/responses/Success'}}}}
   /products:
     get:

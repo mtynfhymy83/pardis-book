@@ -21,6 +21,7 @@ final class RateLimitMiddleware implements MiddlewareInterface
         $rule = match (true) {
             $path === '/api/v1/auth/otp/request' => ['otp.request', 10, 600],
             $path === '/api/v1/auth/otp/verify' => ['otp.verify', 10, 600],
+            $path === '/api/v1/auth/admin/login' => ['admin.login', 10, 600],
             $path === '/api/v1/search/suggestions' => ['search.suggestions', 60, 60],
             $path === '/api/v1/support/tickets' && $method === 'POST' => ['support.ticket', 10, 86400],
             $path === '/api/v1/payments/attempts' && $method === 'POST' => ['payment.attempt', 20, 600],
