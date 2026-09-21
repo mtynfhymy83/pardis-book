@@ -49,6 +49,20 @@ final class S3ObjectStorage implements ObjectStorageInterface
         if ($result === false || preg_match('/\s2\d\d\s/', $status) !== 1) throw new \RuntimeException('S3 upload failed: ' . $status);
     }
 
+    public function publicUrl(string $key): string
+    {
+        $path = '/' . implode('/', array_map('rawurlencode', explode('/', ltrim($key, '/'))));
+        $publicBase = rtrim((string) ($_ENV['S3_PUBLIC_URL'] ?? ''), '/');
+        if ($publicBase !== '') return $publicBase . $path;
+
+        [$base, , $objectPath] = $this->endpoint(
+            $this->required('S3_BUCKET'),
+            (string) ($_ENV['S3_REGION'] ?? 'us-east-1'),
+            $key
+        );
+        return $base . $objectPath;
+    }
+
     public function presignGet(string $key, int $expiresInSeconds = 300): array
     {
         $bucket = $this->required('S3_BUCKET'); $region = (string) ($_ENV['S3_REGION'] ?? 'us-east-1'); $access = $this->required('S3_ACCESS_KEY_ID'); $secret = $this->required('S3_SECRET_ACCESS_KEY');
@@ -70,7 +84,7 @@ final class S3ObjectStorage implements ObjectStorageInterface
             if (!is_array($parts) || empty($parts['scheme']) || empty($parts['host'])) throw new \RuntimeException('S3_ENDPOINT must be an absolute URL.');
             $host = $parts['host'] . (isset($parts['port']) ? ':' . $parts['port'] : '');
             $base = $parts['scheme'] . '://' . $host . rtrim($parts['path'] ?? '', '/');
-            return $pathStyle ? [$base . '/' . rawurlencode($bucket), $host, '/' . rawurlencode($bucket) . $path] : [$parts['scheme'] . '://' . $bucket . '.' . $host . rtrim($parts['path'] ?? '', '/'), $bucket . '.' . $host, $path];
+            return $pathStyle ? [$base, $host, '/' . rawurlencode($bucket) . $path] : [$parts['scheme'] . '://' . $bucket . '.' . $host . rtrim($parts['path'] ?? '', '/'), $bucket . '.' . $host, $path];
         }
         $host = $bucket . '.s3.' . $region . '.amazonaws.com';
         return ['https://' . $host, $host, $path];

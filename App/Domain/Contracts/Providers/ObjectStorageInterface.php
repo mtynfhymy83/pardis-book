@@ -11,6 +11,8 @@ interface ObjectStorageInterface
 
     public function putString(string $key, string $contents, string $mime): void;
 
+    public function publicUrl(string $key): string;
+
     /** @return array{url:string,method:string,expiresAt:string} */
     public function presignGet(string $key, int $expiresInSeconds = 300): array;
 }

@@ -37,6 +37,7 @@ use App\Application\Services\AdminCatalogService;
 use App\Application\Services\AdminConfigurationService;
 use App\Application\Services\ReportService;
 use App\Application\Services\BestSellingService;
+use App\Application\Services\AdminImageUploadService;
 use App\Domain\Contracts\Providers\ObjectStorageInterface;
 use App\Infrastructure\Providers\S3ObjectStorage;
 use App\Http\Middlewares\CheckAccessMiddleware;
@@ -73,6 +74,7 @@ return function (): ContainerInterface {
         AdminConfigurationService::class => autowire(),
         ReportService::class => autowire(),
         BestSellingService::class => autowire(),
+        AdminImageUploadService::class => autowire(),
         ObjectStorageInterface::class => autowire(S3ObjectStorage::class),
         S3ObjectStorage::class => autowire(),
     ]);

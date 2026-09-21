@@ -114,6 +114,7 @@ return static function (Router $r): void {
     $r->put('v1', '/admin/skus/{skuId}/pricing-tiers', AdminCatalogController::class, 'saveTiers', ['pricing.write']);
     $r->post('v1', '/admin/inventory/adjustments', AdminCatalogController::class, 'adjust', ['inventory.adjust']);
     $r->get('v1', '/admin/best-selling-products', AdminBestSellingController::class, 'index', ['catalog.read']);
+    $r->post('v1', '/admin/best-selling-products/cover', AdminBestSellingController::class, 'uploadCover', ['catalog.write']);
     $r->post('v1', '/admin/best-selling-products', AdminBestSellingController::class, 'create', ['catalog.write']);
     $r->patch('v1', '/admin/best-selling-products/{itemId}', AdminBestSellingController::class, 'update', ['catalog.write']);
     $r->delete('v1', '/admin/best-selling-products/{itemId}', AdminBestSellingController::class, 'delete', ['catalog.write']);

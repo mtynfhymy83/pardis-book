@@ -765,6 +765,7 @@ RBAC سمت Backend اجباری است؛ مخفی‌کردن دکمه در Fron
 | `POST` | `/admin/catalog/import` | Import CSV |
 | `GET` | `/admin/catalog/import/{jobId}` | نتیجه Import |
 | `GET/POST` | `/admin/best-selling-products` | فهرست/افزودن پرفروش‌های دستی |
+| `POST` | `/admin/best-selling-products/cover` | آپلود تصویر جلد روی S3 |
 | `PATCH/DELETE` | `/admin/best-selling-products/{id}` | ویرایش/حذف پرفروش دستی |
 
 - Draft و Published جدا باشند.
@@ -778,6 +779,20 @@ RBAC سمت Backend اجباری است؛ مخفی‌کردن دکمه در Fron
 `discountedPrice`، `discountPercent`، `remainingPercent`، `sortOrder` و `active` است.
 قیمت‌ها عدد صحیح برحسب تومان و درصدها بین ۰ تا ۱۰۰ هستند. API عمومی فقط آیتم‌های
 فعال را طبق `sortOrder` برمی‌گرداند. نمونه پاسخ عمومی:
+
+برای تصویر جلد، پنل ابتدا یک درخواست `multipart/form-data` به
+`POST /admin/best-selling-products/cover` می‌فرستد. نام فیلد فایل `image` است؛
+فرمت‌های JPG، PNG و WebP تا سقف ۵ مگابایت پذیرفته می‌شوند. پاسخ موفق:
+
+```json
+{
+  "data": {
+    "coverUrl": "https://cdn.example.com/public/catalog/covers/cover_....webp"
+  }
+}
+```
+
+سپس مقدار `coverUrl` در درخواست ساخت/ویرایش محصول استفاده می‌شود.
 
 ```json
 {

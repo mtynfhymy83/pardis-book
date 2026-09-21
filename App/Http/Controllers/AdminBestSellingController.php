@@ -4,12 +4,17 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Application\Services\AdminImageUploadService;
 use App\Application\Services\BestSellingService;
+use App\Shared\Exceptions\ApiException;
 use Swoole\Http\Request;
 
 final class AdminBestSellingController extends Controller
 {
-    public function __construct(private BestSellingService $bestSelling) {}
+    public function __construct(
+        private BestSellingService $bestSelling,
+        private AdminImageUploadService $images
+    ) {}
 
     public function index(array $request = []): array
     {
@@ -30,5 +35,16 @@ final class AdminBestSellingController extends Controller
     {
         $this->bestSelling->delete($this->requireAuthUserId($request), $itemId);
         return $this->deleted('محصول از فهرست پرفروش‌ها حذف شد.');
+    }
+
+    public function uploadCover(Request $request): array
+    {
+        $file = $request->files['image'] ?? null;
+        if (!is_array($file)) {
+            throw new ApiException('IMAGE_REQUIRED', 'انتخاب تصویر جلد الزامی است.', 422, [
+                'image' => 'یک فایل تصویر انتخاب کنید.',
+            ]);
+        }
+        return $this->created($this->images->uploadCover($file));
     }
 }
