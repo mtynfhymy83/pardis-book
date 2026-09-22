@@ -793,6 +793,10 @@ RBAC سمت Backend اجباری است؛ مخفی‌کردن دکمه در Fron
 ```
 
 سپس مقدار `coverUrl` در درخواست ساخت/ویرایش محصول استفاده می‌شود.
+اگر bucket خصوصی باشد، `S3_PUBLIC_URL` باید به
+`https://admin.pardis-book.ir/api/v1/media` اشاره کند. در این حالت تصویر از
+`GET /media/public/catalog/covers/{filename}` ارائه می‌شود و نیازی به عمومی‌کردن
+کل bucket نیست.
 
 ```json
 {

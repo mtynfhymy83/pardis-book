@@ -36,6 +36,7 @@ final class AdminImageUploadServiceTest extends TestCase
             public function putString(string $key, string $contents, string $mime): void { $this->key = $key; $this->contents = $contents; $this->mime = $mime; }
             public function publicUrl(string $key): string { return 'https://cdn.example.com/' . $key; }
             public function presignGet(string $key, int $expiresInSeconds = 300): array { return []; }
+            public function getString(string $key, int $maxBytes): ?string { return null; }
         };
 
         $result = (new AdminImageUploadService($storage))->uploadCover([
@@ -57,6 +58,7 @@ final class AdminImageUploadServiceTest extends TestCase
             public function putString(string $key, string $contents, string $mime): void {}
             public function publicUrl(string $key): string { return ''; }
             public function presignGet(string $key, int $expiresInSeconds = 300): array { return []; }
+            public function getString(string $key, int $maxBytes): ?string { return null; }
         };
 
         $this->expectException(ApiException::class);

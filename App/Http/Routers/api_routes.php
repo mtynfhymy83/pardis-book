@@ -14,6 +14,7 @@ use App\Http\Controllers\AdminOperationsController;
 use App\Http\Controllers\AdminCatalogController;
 use App\Http\Controllers\AdminConfigurationController;
 use App\Http\Controllers\AdminBestSellingController;
+use App\Http\Controllers\CatalogCoverController;
 use App\Http\Controllers\ReportController;
 
 return static function (Router $r): void {
@@ -33,6 +34,7 @@ return static function (Router $r): void {
     $r->get('v1', '/products', CatalogController::class, 'products');
     $r->get('v1', '/products/best-selling', CatalogController::class, 'bestSelling');
     $r->get('v1', '/products/best-selling/search', CatalogController::class, 'searchBestSelling');
+    $r->get('v1', '/media/public/catalog/covers/{filename}', CatalogCoverController::class, 'show');
     $r->get('v1', '/products/fast-dispatch', CatalogController::class, 'fastDispatch');
     $r->get('v1', '/products/{productSlug}', CatalogController::class, 'product');
     $r->get('v1', '/products/{productSlug}/related', CatalogController::class, 'related');

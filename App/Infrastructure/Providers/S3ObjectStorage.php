@@ -73,6 +73,22 @@ final class S3ObjectStorage implements ObjectStorageInterface
         return ['url'=>$base.$path.'?'.$this->query($query),'method'=>'GET','expiresAt'=>gmdate('c',time()+$expires)];
     }
 
+    public function getString(string $key, int $maxBytes): ?string
+    {
+        $signed = $this->presignGet($key, 900);
+        $context = stream_context_create(['http' => ['ignore_errors' => true, 'timeout' => 15]]);
+        $contents = @file_get_contents($signed['url'], false, $context, 0, $maxBytes + 1);
+        $status = $http_response_header[0] ?? '';
+        if (preg_match('/\s404\s/', $status) === 1) return null;
+        if ($contents === false || preg_match('/\s2\d\d\s/', $status) !== 1) {
+            throw new \RuntimeException('S3 download failed: ' . $status);
+        }
+        if (strlen($contents) > $maxBytes) {
+            throw new \RuntimeException('S3 object exceeds the allowed size.');
+        }
+        return $contents;
+    }
+
     /** @return array{string,string,string} */
     private function endpoint(string $bucket, string $region, string $key): array
     {

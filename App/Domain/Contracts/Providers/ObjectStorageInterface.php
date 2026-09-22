@@ -15,4 +15,6 @@ interface ObjectStorageInterface
 
     /** @return array{url:string,method:string,expiresAt:string} */
     public function presignGet(string $key, int $expiresInSeconds = 300): array;
+
+    public function getString(string $key, int $maxBytes): ?string;
 }
